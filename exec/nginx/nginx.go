@@ -2,7 +2,6 @@ package nginx
 
 import (
 	"context"
-	"fmt"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 	"regexp"
 	"strconv"
@@ -27,24 +26,27 @@ func (*NginxCommandSpec) LongDesc() string {
 	return "Nginx experiment"
 }
 
-func getNginxPid(channel spec.Channel, ctx context.Context) (int, *spec.Response) {
+func getNginxPid(channel spec.Channel, ctx context.Context) ([]int, *spec.Response) {
 	response := channel.Run(ctx,
-		`ps aux | grep -v grep | egrep 'nginx: master' | awk '{print $2}'`, "")
+		`ps aux | grep -v grep | egrep 'nginx: ' | awk '{print $2}'`, "")
 	if !response.Success {
-		return 0, response
+		return []int{}, response
 	}
 	result := response.Result.(string)
 	count := strings.Count(result, "\n")
 	if count == 0 {
-		return 0, spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
-	} else if count > 1 {
-		return 0, spec.ReturnFail(spec.ProcessIdByNameFailed, fmt.Sprintf("too many nginx instances, expect 1 but got %d", count))
+		return []int{}, spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
 	}
-	pid, err := strconv.Atoi(strings.Trim(result, "\n"))
-	if err != nil {
-		return 0, spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
+	var allPid []int
+	for _, s := range strings.Split(strings.Trim(result, "\n"), "\n") {
+		pid, err := strconv.Atoi(s)
+		if err != nil {
+			return []int{}, spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
+		}
+		allPid = append(allPid, pid)
 	}
-	return pid, nil
+
+	return allPid, nil
 }
 
 func getNginxConfigLocation(channel spec.Channel, ctx context.Context) (string, *spec.Response) {

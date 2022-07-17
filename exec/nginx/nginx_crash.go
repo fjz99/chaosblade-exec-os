@@ -69,11 +69,16 @@ func (ng *NginxCrashExecutor) Exec(suid string, ctx context.Context, model *spec
 }
 
 func (ng *NginxCrashExecutor) start(ctx context.Context) *spec.Response {
-	pid, response := getNginxPid(ng.channel, ctx)
+	allPid, response := getNginxPid(ng.channel, ctx)
 	if response != nil {
 		return response
 	}
-	response = ng.channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
+	for _, pid := range allPid {
+		response = ng.channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
+		if !response.Success {
+			return response
+		}
+	}
 	return response
 }
 

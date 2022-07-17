@@ -45,6 +45,6 @@ func TestCrash(t *testing.T) {
 	fmt.Println(*response)
 
 	//cancel
-	response = executor.Exec("dsadsad2", context.Background(), &model)
+	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(*response)
 }
