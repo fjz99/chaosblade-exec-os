@@ -48,3 +48,14 @@ func TestCrash(t *testing.T) {
 	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(*response)
 }
+
+func TestRestart(t *testing.T) {
+	executor := NginxRestartExecutor{channel: channel.NewLocalChannel()}
+	model := spec.ExpModel{}
+	response := executor.Exec("", context.Background(), &model)
+	fmt.Println(*response)
+
+	//cancel
+	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	fmt.Println(*response)
+}
