@@ -63,7 +63,7 @@ func (ng *NginxRestartExecutor) Exec(suid string, ctx context.Context, model *sp
 	}
 
 	if _, ok := spec.IsDestroy(ctx); ok {
-		return spec.ReturnFail(spec.OsCmdExecFailed, "action restart cannot cancel")
+		return spec.ReturnFail(spec.OsCmdExecFailed, "cancel 'nginx restart' is meaningless")
 	}
 	return ng.start(ctx)
 }
