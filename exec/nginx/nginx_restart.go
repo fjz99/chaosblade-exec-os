@@ -30,7 +30,7 @@ blade create network drop --destination-port 80 --string-pattern baidu.com --net
 }
 
 func (*RestartActionSpec) Name() string {
-	return "crash"
+	return "restart"
 }
 
 func (*RestartActionSpec) Aliases() []string {
@@ -38,14 +38,14 @@ func (*RestartActionSpec) Aliases() []string {
 }
 
 func (*RestartActionSpec) ShortDesc() string {
-	return "Crash experiment"
+	return "Restart experiment"
 }
 
 func (d *RestartActionSpec) LongDesc() string {
 	if d.ActionLongDesc != "" {
 		return d.ActionLongDesc
 	}
-	return "Nginx crash"
+	return "Nginx restart"
 }
 
 type NginxRestartExecutor struct {
@@ -53,7 +53,7 @@ type NginxRestartExecutor struct {
 }
 
 func (*NginxRestartExecutor) Name() string {
-	return "crash"
+	return "restart"
 }
 
 func (ng *NginxRestartExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {

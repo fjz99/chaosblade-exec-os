@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"context"
+	"fmt"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 	"regexp"
 	"strconv"
@@ -62,4 +63,12 @@ func getNginxConfigLocation(channel spec.Channel, ctx context.Context) (string, 
 	location := regex.FindStringSubmatch(result)[1]
 	//location = location[:strings.LastIndex(location, "/")]
 	return location, nil
+}
+
+func testNginxConfig(channel spec.Channel, ctx context.Context, file string) *spec.Response {
+	response := channel.Run(ctx, fmt.Sprintf("nginx -t -c %s", file), "")
+	if !response.Success || !strings.Contains(response.Result.(string), "successful") {
+		return response
+	}
+	return nil
 }
