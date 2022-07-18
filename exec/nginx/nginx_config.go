@@ -3,11 +3,12 @@ package nginx
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 	"github.com/chaosblade-io/chaosblade-spec-go/util"
-	"os"
-	"strings"
 )
 
 const (
@@ -113,7 +114,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file %s not exists", newFile))
 		}
 	}
-	if response := testNginxConfig(ng.channel, ctx, newFile); response != nil {
+	if response := testNginxConfig(ng.channel, ctx, newFile, dir); response != nil {
 		return response
 	}
 

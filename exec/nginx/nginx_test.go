@@ -59,3 +59,31 @@ func TestRestart(t *testing.T) {
 	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(*response)
 }
+
+func TestConfigChange(t *testing.T) {
+	s := NewConfigActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+	// model.ActionFlags["file"] = "conf/ok.conf"
+	model.ActionFlags["file"] = "conf/wrong.conf"
+	response := executor.Exec("", context.Background(), &model)
+	fmt.Println(*response)
+
+	//cancel
+	// response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	// fmt.Println(*response)
+}
+
+func TestConfigChangeRevert(t *testing.T) {
+	s := NewConfigActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+
+	//cancel
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	fmt.Println(*response)
+}
