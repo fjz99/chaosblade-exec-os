@@ -319,8 +319,8 @@ func (c *Config) GetBlocksList() []ListResult {
 		return c.blockList
 	}
 	id := 1
-	for i := 0; i < len(c.Blocks); i++ {
-		id = c.printBlocks(&c.Blocks[i], 1, 4, id, false)
+	for _, block := range c.Blocks {
+		id = c.printBlocks(&block, 1, 4, id, false)
 	}
 	return c.blockList
 }
