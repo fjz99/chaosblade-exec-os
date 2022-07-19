@@ -88,6 +88,34 @@ func TestConfigChangeRevert(t *testing.T) {
 	fmt.Println(*response)
 }
 
+func TestListBlock(t *testing.T) {
+	s := NewConfigActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+	model.ActionFlags["list"] = "true"
+
+	//cancel
+	response := executor.Exec("dsadsad2", context.Background(), &model)
+	fmt.Println(*response)
+}
+
+func TestKVChange(t *testing.T) {
+	s := NewConfigActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+	// model.ActionFlags["list"] = "true"
+	model.ActionFlags["set-config"]="a=b;c=d"
+	model.ActionFlags["block-id"]="0"
+
+	//cancel
+	response := executor.Exec("dsadsad2", context.Background(), &model)
+	fmt.Println(*response)
+}
+
 func TestTmp(t *testing.T) {
 
 }

@@ -98,13 +98,13 @@ func (*NginxConfigExecutor) Name() string {
 }
 
 func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {
-	for k, v := range model.ActionFlags {
-		fmt.Println(k, v)
-	}
-	if true {
-		result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
-		return spec.ReturnResultIgnoreCode(result)
-	}
+	// for k, v := range model.ActionFlags {
+	// fmt.Println(k, v)
+	// }
+	// if true {
+	// 	result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
+	// 	return spec.ReturnResultIgnoreCode(result)
+	// }
 	_, response := getNginxPid(ng.channel, ctx) // conf nginx process
 	if response != nil {
 		return response
@@ -191,11 +191,7 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 		}
 		k := strings.Trim(arr[0], " ")
 		v := strings.Trim(arr[1], " ")
-		if blockId == 0 {
-			config.Statements[k] = parser.Statement{Key: k, Value: v}
-		} else {
-			blocksList[blockId-1].Block.Statements[k] = parser.Statement{Key: k, Value: v}
-		}
+		blocksList[blockId].Block.Statements[k] = parser.Statement{Key: k, Value: v}
 	}
 	name := "nginx.chaosblade.tmp.conf"
 	err = config.EasyDumpToFile(name)
