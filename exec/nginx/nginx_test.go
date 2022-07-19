@@ -87,3 +87,7 @@ func TestConfigChangeRevert(t *testing.T) {
 	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(*response)
 }
+
+func TestTmp(t *testing.T) {
+	fmt.Printf(`%d: \e[%dmHello,World!\e[0m\n`, 1, 2)
+}

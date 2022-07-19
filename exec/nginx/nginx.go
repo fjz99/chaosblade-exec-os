@@ -71,7 +71,7 @@ func getNginxConfigLocation(channel spec.Channel, ctx context.Context) (string, 
 // nginx.conf may have 'include mime.types;'
 func testNginxConfig(channel spec.Channel, ctx context.Context, file, dir string) *spec.Response {
 	file, _ = filepath.Abs(file)
-	tmpFile := fmt.Sprintf("%snginx_chaosblade_temp_%v.conf", dir, time.Now().UnixMilli())
+	tmpFile := fmt.Sprintf("%snginx_chaosblade_temp_%v.conf", dir, time.Now().Unix())
 	response := channel.Run(ctx, fmt.Sprintf("cp %s %s && nginx -t -c %s", file, tmpFile, tmpFile), "")
 	channel.Run(ctx, fmt.Sprintf("rm %s", tmpFile), "") //ignore response
 	if !response.Success || !strings.Contains(response.Result.(string), "successful") {

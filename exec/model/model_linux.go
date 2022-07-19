@@ -23,6 +23,7 @@ import (
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/kernel"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/mem"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/network"
+	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/process"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/script"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/systemd"
@@ -42,5 +43,6 @@ func GetAllExpModels() []spec.ExpModelCommandSpec {
 		file.NewFileCommandSpec(),
 		kernel.NewKernelInjectCommandSpec(),
 		systemd.NewSystemdCommandModelSpec(),
+		nginx.NewNginxCommandSpec(),
 	}
 }
