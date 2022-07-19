@@ -191,7 +191,11 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 		}
 		k := strings.Trim(arr[0], " ")
 		v := strings.Trim(arr[1], " ")
-		blocksList[blockId].Block.Statements[k] = parser.Statement{Key: k, Value: v}
+		if blockId == 0 {
+			config.Statements[k] = parser.Statement{Key: k, Value: v}
+		} else {
+			blocksList[blockId-1].Block.Statements[k] = parser.Statement{Key: k, Value: v}
+		}
 	}
 	name := "nginx.chaosblade.tmp.conf"
 	err = config.EasyDumpToFile(name)
