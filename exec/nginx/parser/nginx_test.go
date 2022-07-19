@@ -3,18 +3,15 @@ package parser
 import (
 	"fmt"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-	"os"
 	"testing"
 )
 
 func Test1(t *testing.T) {
-	input, err := antlr.NewFileStream("test.conf")
-	if err != nil {
-		panic(err)
-	}
-	//input := antlr.NewInputStream(`      if ($host = 'www.gc.com'){
-	//    rewrite ^/(.*)$ http://www.qqq.com/$1 permanent;
-	//  }`)
+	//input, err := antlr.NewFileStream("test.conf")
+	//if err != nil {
+	//	panic(err)
+	//}
+	input := antlr.NewInputStream(`server_name localhost;#ddddd`)
 	lexer := NewNginxLexer(input)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := NewNginxParser(stream)
@@ -22,15 +19,15 @@ func Test1(t *testing.T) {
 	p.BuildParseTrees = true
 	tree := p.Config()
 	fmt.Println(tree.ToStringTree(nil, p))
-	visitor := newMappingVisitor()
-	config := tree.Accept(visitor).(*Config)
-	fmt.Println(config)
-
-	file, err := os.OpenFile("out.conf", os.O_CREATE, 0666)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
+	//visitor := newMappingVisitor()
+	//config := tree.Accept(visitor).(*Config)
+	//fmt.Println(config)
+	//
+	//file, err := os.OpenFile("out.conf", os.O_CREATE, 0666)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//defer file.Close()
 
 	//config.EasyDumpToFile(file)
 }

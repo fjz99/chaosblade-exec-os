@@ -92,10 +92,15 @@ STR_EXT
  ([a-zA-Z0-9_/.,\-:=~+!?$&^*[\]@|#] | NON_ASCII)+
   ;
 
-Comment
-    :
-    '#' ~[\r\n]* -> skip
-    ;
+//Comment
+  //  :
+    //'#' ~[\r\n]* -> skip
+   // ;
+
+LINE_COMMENT: (
+        ('-- ' | '#') ~[\r\n]* ('\r'? '\n' | EOF)
+        | '--' ('\r'? '\n' | EOF)
+    ) -> skip;
 
 REGEXP_PREFIXED
   : (RegexpPrefix)[a-zA-Z0-9_/.,\-:=~+!?$&^*[\]@|#)(]+

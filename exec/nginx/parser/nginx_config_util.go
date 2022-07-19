@@ -213,8 +213,8 @@ func LoadConfig(file string) (*Config, error) {
 	//p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
 	p.BuildParseTrees = true
 	tree := p.Config()
+	//fmt.Println(tree.ToStringTree(nil, p))
 	visitor := newMappingVisitor()
-	//global block id=0 TODO
 	config := tree.Accept(visitor).(*Config)
 	return config, nil
 }

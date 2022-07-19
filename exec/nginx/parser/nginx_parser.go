@@ -38,7 +38,7 @@ func nginxParserInit() {
 	}
 	staticData.symbolicNames = []string{
 		"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Value",
-		"STR_EXT", "Comment", "REGEXP_PREFIXED", "QUOTED_STRING", "SINGLE_QUOTED",
+		"STR_EXT", "LINE_COMMENT", "REGEXP_PREFIXED", "QUOTED_STRING", "SINGLE_QUOTED",
 		"WS",
 	}
 	staticData.ruleNames = []string{
@@ -154,7 +154,7 @@ const (
 	NginxParserT__13           = 14
 	NginxParserValue           = 15
 	NginxParserSTR_EXT         = 16
-	NginxParserComment         = 17
+	NginxParserLINE_COMMENT    = 17
 	NginxParserREGEXP_PREFIXED = 18
 	NginxParserQUOTED_STRING   = 19
 	NginxParserSINGLE_QUOTED   = 20
