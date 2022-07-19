@@ -98,13 +98,13 @@ func (*NginxConfigExecutor) Name() string {
 }
 
 func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {
-	for k, v := range model.ActionFlags {
-		fmt.Println(k, v)
-	}
-	if true {
-		result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
-		return spec.ReturnResultIgnoreCode(result)
-	}
+	// for k, v := range model.ActionFlags {
+	// fmt.Println(k, v)
+	// }
+	// if true {
+	// 	result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
+	// 	return spec.ReturnResultIgnoreCode(result)
+	// }
 	_, response := getNginxPid(ng.channel, ctx) // conf nginx process
 	if response != nil {
 		return response
@@ -184,16 +184,22 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id %s is not valid", id))
 	}
 	blocksList := config.GetBlocksList()
+	fmt.Println(blocksList)
+	if len(blocksList) <= blockId {
+		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id %d is too large, there are only %d blocks", blockId, len(blocksList)))
+	}
+	newKV = strings.TrimSpace(newKV)
+	newKV = strings.Trim(newKV, ";")
 	for _, kv := range strings.Split(newKV, ";") {
-		arr := strings.Split(strings.Trim(kv, " "), "=")
+		arr := strings.Split(strings.TrimSpace(kv), "=")
 		if len(arr) != 2 {
 			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("set-config %s is not valid", newKV))
 		}
-		k := strings.Trim(arr[0], " ")
-		v := strings.Trim(arr[1], " ")
+		k := strings.TrimSpace(arr[0])
+		v := strings.TrimSpace(arr[1])
 		blocksList[blockId].Block.Statements[k] = parser.Statement{Key: k, Value: v}
 	}
-	name := "nginx.chaosblade.tmp.conf"
+	name := "nginx_chaosblade_tmp.conf"
 	err = config.EasyDumpToFile(name)
 	if err != nil {
 		return "", spec.ReturnFail(spec.OsCmdExecFailed, err.Error())
@@ -216,10 +222,4 @@ func (ng *NginxConfigExecutor) stop(ctx context.Context, dir, activeFile, backup
 
 func (ng *NginxConfigExecutor) SetChannel(channel spec.Channel) {
 	ng.channel = channel
-}
-
-func listAllBlocks() string {
-	newFile := "nginx.conf.tmp"
-	panic("not impl")
-	return newFile
 }

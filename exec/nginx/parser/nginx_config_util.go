@@ -220,7 +220,7 @@ func LoadConfig(file string) (*Config, error) {
 }
 
 func (c *Config) EasyDumpToFile(fileName string) error {
-	file, err := os.OpenFile(fileName, os.O_CREATE, 0666)
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
