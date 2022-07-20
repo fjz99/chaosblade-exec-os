@@ -182,13 +182,13 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 	blocksList := config.GetBlocksList()
 	blockId, err := strconv.Atoi(id)
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
-		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id %s is not valid, expected %d-%d", id, 0, len(blocksList)))
+		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id '%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}
 
 	for _, kv := range strings.Split(newKV, ";") {
 		arr := strings.Split(strings.Trim(kv, " "), "=")
 		if len(arr) != 2 {
-			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("set-config %s is not valid", newKV))
+			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("set-config '%s' is not valid", newKV))
 		}
 		k := strings.Trim(arr[0], " ")
 		v := strings.Trim(arr[1], " ")
@@ -221,10 +221,4 @@ func (ng *NginxConfigExecutor) stop(ctx context.Context, dir, activeFile, backup
 
 func (ng *NginxConfigExecutor) SetChannel(channel spec.Channel) {
 	ng.channel = channel
-}
-
-func listAllBlocks() string {
-	newFile := "nginx.conf.tmp"
-	panic("not impl")
-	return newFile
 }
