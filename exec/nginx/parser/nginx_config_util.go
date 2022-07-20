@@ -336,9 +336,12 @@ func (c *Config) printBlocks(block *Block, level, indent, startId int, print boo
 	}
 
 	startId = startId + 1
-	for _, b := range block.Blocks {
-		startId = c.printBlocks(&b, level+1, 4, startId, print)
+	for i := 0; i < len(block.Blocks); i++ {
+		startId = c.printBlocks(&block.Blocks[i], level+1, 4, startId, print)
 	}
+	// for _, b := range block.Blocks {
+	// startId = c.printBlocks(&b, level+1, 4, startId, print)
+	// }
 	if print && block.Type != Location && block.Type != Http {
 		fmt.Println("│")
 	}

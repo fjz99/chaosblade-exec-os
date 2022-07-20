@@ -137,12 +137,8 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 		if config == nil {
 			config, _ = parser.LoadConfig(activeFile)
 		}
-		var response *spec.Response
-		newFile, response = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
-		if response != nil {
-			return response
-		}
-		return response
+		newFile, _ = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
+		// return nil
 	} else {
 		if !util.IsExist(newFile) || util.IsDir(newFile) {
 			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file %s not exists", newFile))
@@ -184,7 +180,10 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
 		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id '%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}
-
+	// for _, b := range blocksList {
+		// fmt.Println(b, *b.Block)
+		// fmt.Println()
+	// }
 	for _, kv := range strings.Split(newKV, ";") {
 		arr := strings.Split(strings.Trim(kv, " "), "=")
 		if len(arr) != 2 {

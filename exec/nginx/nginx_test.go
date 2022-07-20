@@ -108,12 +108,26 @@ func TestKVChange(t *testing.T) {
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["list"] = "true"
-	model.ActionFlags["set-config"]="a=b;c=d"
-	model.ActionFlags["block-id"]="0"
 
-	//cancel
+	// model.ActionFlags["set-config"]="listen=9999"
+	// model.ActionFlags["block-id"]="3"
+
+	model.ActionFlags["set-config"]="proxy_pass=https://www.baidu.com"
+	model.ActionFlags["block-id"]="4"
+
 	response := executor.Exec("dsadsad2", context.Background(), &model)
-	fmt.Println(*response)
+	fmt.Println(response)
+}
+
+func TestCancelKVChange(t *testing.T) {
+	s := NewConfigActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	fmt.Println(response)
 }
 
 func TestTmp(t *testing.T) {
