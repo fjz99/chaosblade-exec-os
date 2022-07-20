@@ -20,8 +20,11 @@ func NewCrashActionSpec() spec.ExpActionCommandSpec {
 			ActionFlags:    []spec.ExpFlagSpec{},
 			ActionExecutor: &NginxCrashExecutor{},
 			ActionExample: `
-# Block outgoing connection to the specific domain on port 80
-blade create network drop --destination-port 80 --string-pattern baidu.com --network-traffic out
+# Nginx crash
+blade create nginx crash
+
+# Nginx restart
+blade destroy nginx crash
 `,
 			ActionPrograms:   []string{NginxCrashBin},
 			ActionCategories: []string{category.Middleware},
@@ -45,7 +48,7 @@ func (d *CrashActionSpec) LongDesc() string {
 	if d.ActionLongDesc != "" {
 		return d.ActionLongDesc
 	}
-	return "Nginx crash"
+	return "Nginx crash experiment"
 }
 
 type NginxCrashExecutor struct {

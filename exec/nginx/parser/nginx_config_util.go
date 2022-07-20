@@ -50,14 +50,6 @@ func newConfig() *Config {
 	return &Config{Statements: make(map[string]Statement)}
 }
 
-//func newBlock(config *Config, parentId int) *Block {
-//	block := &Block{Statements: make(map[string]Statement)}
-//	if config != nil {
-//		config.idCounter = config.idCounter + 1
-//		config.blockList = append(config.blockList, *newListResult(block, config.idCounter, parentId))
-//	}
-//	return block
-//}
 func newBlock() *Block {
 	block := &Block{Statements: make(map[string]Statement)}
 	return block
@@ -339,9 +331,6 @@ func (c *Config) printBlocks(block *Block, level, indent, startId int, print boo
 	for i := 0; i < len(block.Blocks); i++ {
 		startId = c.printBlocks(&block.Blocks[i], level+1, 4, startId, print)
 	}
-	// for _, b := range block.Blocks {
-	// startId = c.printBlocks(&b, level+1, 4, startId, print)
-	// }
 	if print && block.Type != Location && block.Type != Http {
 		fmt.Println("│")
 	}

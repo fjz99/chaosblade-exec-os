@@ -20,8 +20,8 @@ func NewRestartActionSpec() spec.ExpActionCommandSpec {
 			ActionFlags:    []spec.ExpFlagSpec{},
 			ActionExecutor: &NginxRestartExecutor{},
 			ActionExample: `
-# Block outgoing connection to the specific domain on port 80
-blade create network drop --destination-port 80 --string-pattern baidu.com --network-traffic out
+# Nginx restart
+blade create nginx restart
 `,
 			ActionPrograms:   []string{NginxRestartBin},
 			ActionCategories: []string{category.Middleware},
@@ -45,7 +45,7 @@ func (d *RestartActionSpec) LongDesc() string {
 	if d.ActionLongDesc != "" {
 		return d.ActionLongDesc
 	}
-	return "Nginx restart"
+	return "Nginx restart experiment"
 }
 
 type NginxRestartExecutor struct {

@@ -11,6 +11,7 @@ func NewNginxCommandSpec() spec.ExpModelCommandSpec {
 				NewCrashActionSpec(),
 				NewRestartActionSpec(),
 				NewConfigActionSpec(),
+				NewResponseActionSpec(),
 			},
 			ExpFlags: []spec.ExpFlagSpec{},
 		},

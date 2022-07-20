@@ -32,7 +32,7 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 				},
 				&spec.ExpFlag{
 					Name: "block-id",
-					Desc: "",
+					Desc: "target block id for config modification",
 				},
 				&spec.ExpFlag{
 					Name: "set-config",
@@ -58,11 +58,17 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 			},
 			ActionExecutor: &NginxConfigExecutor{},
 			ActionExample: `
-# Block outgoing connection to the specific domain on port 80
-blade create nginx config --file newConfig.conf --string-pattern baidu.com --network-traffic out
+# List all nginx.conf blocks
+blade create nginx config --list
 
-chaos_os create nginx config --force=true --set-config 'xx=xx;xx=xx'
+# Change 'server' (assuming block id = 1) exposed on port 8899
+blade create nginx config --block-id 3 --set-config='listen=8899'
 
+# Set 'location /' (assuming block id = 3) proxy_pass to www.baidu.com
+blade create nginx config --block-id 3 --set-config='proxy_pass=www.baidu.com'
+
+# Cancel config change
+blade destroy nginx config
 `,
 			ActionPrograms:   []string{NginxConfigBin},
 			ActionCategories: []string{category.Middleware},
@@ -105,7 +111,7 @@ func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spe
 	// 	result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
 	// 	return spec.ReturnResultIgnoreCode(result)
 	// }
-	_, response := getNginxPid(ng.channel, ctx) // conf nginx process
+	_, response := getNginxPid(ng.channel, ctx) // nginx process
 	if response != nil {
 		return response
 	}
@@ -180,10 +186,6 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
 		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id '%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}
-	// for _, b := range blocksList {
-		// fmt.Println(b, *b.Block)
-		// fmt.Println()
-	// }
 	for _, kv := range strings.Split(newKV, ";") {
 		arr := strings.Split(strings.Trim(kv, " "), "=")
 		if len(arr) != 2 {
@@ -205,7 +207,6 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 	return name, nil
 }
 
-//通用
 func (ng *NginxConfigExecutor) stop(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
 	if !util.IsExist(backup) || util.IsDir(backup) {
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
