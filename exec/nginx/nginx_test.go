@@ -41,11 +41,11 @@ func TestRegex(t *testing.T) {
 func TestCrash(t *testing.T) {
 	executor := NginxCrashExecutor{channel: channel.NewLocalChannel()}
 	model := spec.ExpModel{}
-	response := executor.Exec("", context.Background(), &model)
-	fmt.Println(*response)
+	// response := executor.Exec("", context.Background(), &model)
+	// fmt.Println(*response)
 
 	//cancel
-	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(*response)
 }
 
@@ -56,8 +56,8 @@ func TestRestart(t *testing.T) {
 	fmt.Println(*response)
 
 	//cancel
-	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
-	fmt.Println(*response)
+	// response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	// fmt.Println(*response)
 }
 
 func TestConfigChange(t *testing.T) {
@@ -66,8 +66,8 @@ func TestConfigChange(t *testing.T) {
 	executor.SetChannel(channel.NewLocalChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
-	// model.ActionFlags["file"] = "conf/ok.conf"
-	model.ActionFlags["file"] = "conf/wrong.conf"
+	model.ActionFlags["file"] = "conf/ok.conf"
+	// model.ActionFlags["file"] = "conf/wrong.conf"
 	response := executor.Exec("", context.Background(), &model)
 	fmt.Println(*response)
 
@@ -109,10 +109,10 @@ func TestKVChange(t *testing.T) {
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["list"] = "true"
 
-	// model.ActionFlags["set-config"]="listen=9999"
-	// model.ActionFlags["block-id"]="3"
-
-	model.ActionFlags["set-config"]="proxy_pass=https://www.baidu.com"
+	// model.ActionFlags["set-config"] = "listen=9999"
+	// model.ActionFlags["block-id"] = "3"
+	// http.server.location=xxx
+	model.ActionFlags["set-config"]="proxy_pass=https://www.taobao.com"
 	model.ActionFlags["block-id"]="4"
 
 	response := executor.Exec("dsadsad2", context.Background(), &model)

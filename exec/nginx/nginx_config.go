@@ -61,6 +61,13 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 # List all nginx.conf blocks
 blade create nginx config --list
 
+TODO mod
+# Change config file to my.conf
+blade create nginx config --file my.conf
+
+# Change config file to my.conf, and delete nginx conf backup file if it exists
+blade create nginx config --file my.conf --force
+
 # Change 'server' (assuming block id = 1) exposed on port 8899
 blade create nginx config --block-id 3 --set-config='listen=8899'
 
