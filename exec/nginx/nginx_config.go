@@ -16,8 +16,11 @@ import (
 const (
 	NginxConfigBin   = "chaos_nginxconfig"
 	configBackupName = "nginx.conf.chaosblade.back"
+	fileMode         = "file"
+	cmdMode          = "cmd"
 )
 
+//TODO 支持版本链
 type ConfigActionSpec struct {
 	spec.BaseExpActionCommandSpec
 }
@@ -26,6 +29,10 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 	return &ConfigActionSpec{
 		spec.BaseExpActionCommandSpec{
 			ActionMatchers: []spec.ExpFlagSpec{
+				&spec.ExpFlag{
+					Name: "mode",
+					Desc: fmt.Sprintf("The configuration change mode (%s or %s)", fileMode, cmdMode),
+				},
 				&spec.ExpFlag{
 					Name: "file",
 					Desc: "The new nginx.conf file",
@@ -40,42 +47,41 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 				},
 			},
 			ActionFlags: []spec.ExpFlagSpec{
-				&spec.ExpFlag{
-					Name:   "force",
-					Desc:   "ChaosBlade will delete config backup file if it exists",
-					NoArgs: true,
-				},
+				// &spec.ExpFlag{
+				// 	Name:   "force",
+				// 	Desc:   "ChaosBlade will delete config backup file if it exists",
+				// 	NoArgs: true,
+				// },
 				&spec.ExpFlag{
 					Name:   "list",
 					Desc:   "List all nginx config blocks",
 					NoArgs: true,
 				},
-				//&spec.ExpFlag{
-				//	Name:   "pretty",
-				//	Desc:   "Print all nginx config blocks in pretty format",
-				//	NoArgs: true,
-				//},
 			},
 			ActionExecutor: &NginxConfigExecutor{},
 			ActionExample: `
 # List all nginx.conf blocks
 blade create nginx config --list
 
-TODO mod
 # Change config file to my.conf
-blade create nginx config --file my.conf
+blade create nginx config --mode file --file my.conf
 
+//!!!
 # Change config file to my.conf, and delete nginx conf backup file if it exists
 blade create nginx config --file my.conf --force
+//!!!
 
 # Change 'server' (assuming block id = 1) exposed on port 8899
-blade create nginx config --block-id 3 --set-config='listen=8899'
+blade create nginx config --mode cmd --block-id 3 --set-config='listen=8899'
 
 # Set 'location /' (assuming block id = 3) proxy_pass to www.baidu.com
-blade create nginx config --block-id 3 --set-config='proxy_pass=www.baidu.com'
+blade create nginx config --mode cmd --block-id 3 --set-config='proxy_pass=www.baidu.com'
 
-# Cancel config change
-blade destroy nginx config
+# Revert config change, uid = xxx
+blade destroy nginx config --uid 
+
+# Revert config change to the oldest config file
+blade destroy nginx config --force
 `,
 			ActionPrograms:   []string{NginxConfigBin},
 			ActionCategories: []string{category.Middleware},
@@ -143,20 +149,38 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 		config.ListAllBlocks()
 		return spec.Success()
 	}
-
+	mode := model.ActionFlags["mode"]
 	newFile := model.ActionFlags["file"]
-	if newFile == "" {
-		//create new config
+	switch mode {
+	case fileMode:
+		if newFile == "" || !util.IsExist(newFile) || util.IsDir(newFile) {
+			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file '%s' not exists", newFile))
+		}
+	case cmdMode:
 		if config == nil {
 			config, _ = parser.LoadConfig(activeFile)
 		}
-		newFile, _ = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
-		// return nil
-	} else {
-		if !util.IsExist(newFile) || util.IsDir(newFile) {
-			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file %s not exists", newFile))
+		var resp *spec.Response
+		newFile, resp = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
+		if resp != nil {
+			return resp
 		}
+	default:
+		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
 	}
+	// if mode == "file" {
+	// 	if newFile == "" || !util.IsExist(newFile) || util.IsDir(newFile) {
+	// 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file %s not exists", newFile))
+	// 	}
+	// } else if mode == "" {
+	// 	//create new config
+	// 	if config == nil {
+	// 		config, _ = parser.LoadConfig(activeFile)
+	// 	}
+	// 	newFile, _ = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
+	// } else {
+	// 	return spec.ReturnFail(spec.OsCmdExecFailed, "mode cannot be null")
+	// }
 	if response := testNginxConfig(ng.channel, ctx, newFile, dir); response != nil {
 		return response
 	}
@@ -190,16 +214,17 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 func createNewConfig(config *parser.Config, id string, newKV string) (string, *spec.Response) {
 	blocksList := config.GetBlocksList()
 	blockId, err := strconv.Atoi(id)
+	fmt.Println("id=", id, err)
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
-		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id '%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
+		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--block-id='%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}
 	for _, kv := range strings.Split(newKV, ";") {
-		arr := strings.Split(strings.Trim(kv, " "), "=")
-		if len(arr) != 2 {
-			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("set-config '%s' is not valid", newKV))
+		arr := strings.Split(strings.TrimSpace(kv), "=")
+		if newKV == "" || len(arr) != 2 {
+			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--set-config='%s' is not valid", newKV))
 		}
-		k := strings.Trim(arr[0], " ")
-		v := strings.Trim(arr[1], " ")
+		k := strings.TrimSpace(arr[0])
+		v := strings.TrimSpace(arr[1])
 		if blockId == 0 {
 			config.Statements[k] = parser.Statement{Key: k, Value: v}
 		} else {
@@ -215,6 +240,10 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 }
 
 func (ng *NginxConfigExecutor) stop(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+	mode := model.ActionFlags["mode"]
+	if mode != "" {
+		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--mode cannot be %s when destroying Nginx config experiment", mode))
+	}
 	if !util.IsExist(backup) || util.IsDir(backup) {
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
 	}
