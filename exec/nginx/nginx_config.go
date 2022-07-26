@@ -168,37 +168,20 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 	default:
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
 	}
-	// if mode == "file" {
-	// 	if newFile == "" || !util.IsExist(newFile) || util.IsDir(newFile) {
-	// 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file %s not exists", newFile))
-	// 	}
-	// } else if mode == "" {
-	// 	//create new config
-	// 	if config == nil {
-	// 		config, _ = parser.LoadConfig(activeFile)
-	// 	}
-	// 	newFile, _ = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
-	// } else {
-	// 	return spec.ReturnFail(spec.OsCmdExecFailed, "mode cannot be null")
-	// }
 	if response := testNginxConfig(ng.channel, ctx, newFile, dir); response != nil {
 		return response
 	}
 
+	cmd := ""
 	if util.IsExist(backup) {
-		force := model.ActionFlags["force"] == "true"
-		if force {
-			if response := ng.channel.Run(ctx, fmt.Sprintf("rm %s", backup), ""); !response.Success {
-				return response
-			}
-		} else {
-			return spec.ReturnFail(spec.OsCmdExecFailed,
-				fmt.Sprintf("cannot change config due to backup file %s exists", backup))
-		}
+		//don't create backup
+		//TODO version chain
+		cmd = fmt.Sprintf("cp -f %s %s", newFile, activeFile)
+	} else {
+		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, newFile, activeFile)
 	}
 
-	cmd := fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, newFile, activeFile)
-	if model.ActionFlags["file"] == "" {
+	if model.ActionFlags["mode"] == cmdMode {
 		// remove auto generated config
 		cmd += fmt.Sprintf(" && rm %s", newFile)
 	}
