@@ -133,6 +133,33 @@ func TestCancelKVChange(t *testing.T) {
 	fmt.Println(response)
 }
 
+func TestChangeResponse(t *testing.T) {
+	s := NewResponseActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+	model.ActionFlags["type"] = ""
+	model.ActionFlags["path"] = ""
+	model.ActionFlags["code"] = ""
+	model.ActionFlags["header"] = ""
+	model.ActionFlags["body"] = ""
+
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	fmt.Println(response)
+}
+
+func TestCancelResponseChange(t *testing.T) {
+	s := NewResponseActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	fmt.Println(response)
+}
+
 func TestTmp(t *testing.T) {
 
 }

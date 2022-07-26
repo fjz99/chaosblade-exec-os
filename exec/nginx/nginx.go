@@ -66,7 +66,7 @@ func getNginxConfigLocation(channel spec.Channel, ctx context.Context) (string, 
 	return location, nil
 }
 
-// nginx.conf may have 'include mime.types;'
+// nginx.conf may have 'include mime.types;' etc.
 func testNginxConfig(channel spec.Channel, ctx context.Context, file, dir string) *spec.Response {
 	file, _ = filepath.Abs(file)
 	tmpFile := fmt.Sprintf("%snginx_chaosblade_temp_%v.conf", dir, time.Now().Unix())

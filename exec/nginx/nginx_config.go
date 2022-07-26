@@ -21,6 +21,7 @@ const (
 )
 
 //TODO 支持版本链
+//TODO kv的key是可以重复的！
 type ConfigActionSpec struct {
 	spec.BaseExpActionCommandSpec
 }
@@ -209,6 +210,8 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 		k := strings.TrimSpace(arr[0])
 		v := strings.TrimSpace(arr[1])
 		if blockId == 0 {
+			//TODO key is not unique
+			//目前还是替换
 			config.Statements[k] = parser.Statement{Key: k, Value: v}
 		} else {
 			blocksList[blockId-1].Block.Statements[k] = parser.Statement{Key: k, Value: v}
