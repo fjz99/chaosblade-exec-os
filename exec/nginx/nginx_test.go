@@ -34,8 +34,8 @@ func TestRegex(t *testing.T) {
 	pid, response := getNginxPid(channel.NewLocalChannel(), context.Background())
 	fmt.Println(pid, response)
 
-	loc, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
-	fmt.Println(loc, res)
+	dir, loc, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
+	fmt.Println(dir, loc, res)
 }
 
 func TestCrash(t *testing.T) {
@@ -139,13 +139,14 @@ func TestChangeResponse(t *testing.T) {
 	executor.SetChannel(channel.NewLocalChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
-	model.ActionFlags["type"] = ""
-	model.ActionFlags["path"] = ""
-	model.ActionFlags["code"] = ""
+	model.ActionFlags["type"] = "json"
+	model.ActionFlags["path"] = "/test"
+	model.ActionFlags["code"] = "200"
 	model.ActionFlags["header"] = ""
-	model.ActionFlags["body"] = ""
+	model.ActionFlags["body"] = `{"a":1}`
+	// model.ActionFlags["body"] = "hello!"
 
-	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	response := executor.Exec("dsadsad2", context.Background(), &model)
 	fmt.Println(response)
 }
 

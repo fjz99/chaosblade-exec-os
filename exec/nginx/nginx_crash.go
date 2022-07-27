@@ -76,10 +76,10 @@ func (ng *NginxCrashExecutor) start(ctx context.Context) *spec.Response {
 	if response != nil {
 		return response
 	}
-	fmt.Println(allPid)
+	// fmt.Println(allPid)
 	for _, pid := range allPid {
 		response = ng.channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
-		fmt.Println(response)
+		// fmt.Println(response)
 		if !response.Success {
 			return response
 		}

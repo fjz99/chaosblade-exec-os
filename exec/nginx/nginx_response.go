@@ -3,8 +3,7 @@ package nginx
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
+	"strconv"
 
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
@@ -13,8 +12,10 @@ import (
 )
 
 const (
-	NginxResponseBin   = "chaos_nginxresponse"
-	defaultContentType = "text/plain;charset=utf-8"
+	NginxResponseBin           = "chaos_nginxresponse"
+	defaultContentType         = "text/plain;charset=utf-8"
+	contentTypeHeaderNameUpper = "Content-Type"
+	contentTypeHeaderNameLower = "content-type"
 )
 
 var contentTypeMap = map[string]string{
@@ -28,7 +29,6 @@ type ResponseActionSpec struct {
 }
 
 //TODO regex支持
-//TODO 支持设置响应头
 //TODO 支持匹配冲突问题，即regex情况下的多个匹配都满足的情况
 //TODO 支持路由类型的响应替换？
 //TODO 支持html文件类型，解决方案是自己启动一个web server
@@ -76,6 +76,9 @@ blade create nginx response --path /test --body ok
 # Set /test returns body='',code=500,type=json
 blade create nginx response --path /test --code 500
 
+# Set /test returns body='',code=500,type=json
+blade create nginx response --path /test --code 200 --body '{"a":1}' --type json
+
 # Revert config change to the oldest config file
 blade destroy nginx response
 			`,
@@ -118,11 +121,10 @@ func (ng *NginxResponseExecutor) Exec(suid string, ctx context.Context, model *s
 		return response
 	}
 
-	activeFile, response := getNginxConfigLocation(ng.channel, ctx)
+	dir, activeFile, response := getNginxConfigLocation(ng.channel, ctx)
 	if response != nil {
 		return response
 	}
-	dir := activeFile[:strings.LastIndex(activeFile, string(os.PathSeparator))+1]
 	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
@@ -146,12 +148,40 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	if response != nil {
 		return response
 	}
-	block, response := createNewLocationBlock(path, code, body, header, contentType)
+	newBlock, response := createNewLocationBlock(path, code, body, header, contentType)
 	if response != nil {
 		return response
 	}
-	newBlockList := []parser.Block{block}
-	server.Blocks = append(newBlockList, server.Blocks...)
+	newBlockList := []parser.Block{*newBlock}
+	for _, b := range server.Blocks {
+		if b.Type != newBlock.Type || b.Header != newBlock.Header{
+			newBlockList = append(newBlockList, b)
+		}
+	}
+	server.Blocks = newBlockList
+
+	name := "nginx.chaosblade.tmp.conf"
+	err := config.EasyDumpToFile(name)
+	if err != nil {
+		return spec.ReturnFail(spec.OsCmdExecFailed, err.Error())
+	}
+	if response := testNginxConfig(ng.channel, ctx, name, dir); response != nil {
+		return response
+	}
+
+	cmd := ""
+	if util.IsExist(backup) {
+		//don't create backup
+		//TODO version chain
+		cmd = fmt.Sprintf("cp -f %s %s", name, activeFile)
+	} else {
+		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, name, activeFile)
+	}
+	cmd += fmt.Sprintf(" && rm %s && nginx -s reload", name)
+	response = ng.channel.Run(ctx, cmd, "")
+	if !response.Success {
+		return response
+	}
 
 	return spec.ReturnSuccess("set response successfully")
 }
@@ -188,18 +218,48 @@ func getContentType(contentTypeKey string) (string, *spec.Response) {
 
 //TODO not only first
 func findServerBlock(config *parser.Config) (*parser.Block, *spec.Response) {
-	for _, b := range config.Blocks {
+	var http *parser.Block = nil
+	for i := 0; i < len(config.Blocks); i++ {
+		b := &config.Blocks[i]
+		if b.Type == parser.Http {
+			http = b
+			break
+		}
+	}
+	for i := 0; i < len(http.Blocks); i++ {
+		b := &http.Blocks[i]
 		if b.Type == parser.Server {
-			return &b, nil
+			return b, nil
 		}
 	}
 	return nil, spec.ReturnFail(spec.OsCmdExecFailed, "Server config not found in nginx.conf")
 }
 
-func createNewLocationBlock(path, code, body, header, contentType string) (parser.Block, *spec.Response) {
+func createNewLocationBlock(path, code, body, header, contentType string) (*parser.Block, *spec.Response) {
 	block := parser.NewBlock()
 	block.Type = parser.Location
-	block.Statements
 	block.Header = fmt.Sprintf("%s = %s", block.Type, path) //highest priority
-	return *block, nil
+	pairs := parseMultipleKvPairs(header)
+	if pairs == nil && header != "" {
+		return nil, spec.ReturnFail(spec.ParameterInvalid, fmt.Sprintf("--header=%s is not valid", header))
+	}
+	hasContentType := false
+	for _, pair := range pairs {
+		statement := parser.Statement{Key: pair[0], Value: pair[1]}
+		block.Statements[statement.Key] = statement
+		if statement.Key == contentTypeHeaderNameLower ||
+			statement.Key == contentTypeHeaderNameUpper {
+			hasContentType = true
+		}
+	}
+	if !hasContentType {
+		block.Statements["add_header"] = parser.Statement{Key: "add_header", Value: fmt.Sprintf("Content-Type '%s'", contentType)}
+	}
+
+	if _, err := strconv.Atoi(code); err != nil {
+		return nil, spec.ReturnFail(spec.ParameterInvalid, fmt.Sprintf("--code=%s is not valid, %s", code, err))
+	}
+	statement := parser.Statement{Key: "return", Value: fmt.Sprintf("%s '%s'", code, body)}
+	block.Statements[statement.Key] = statement
+	return block, nil
 }

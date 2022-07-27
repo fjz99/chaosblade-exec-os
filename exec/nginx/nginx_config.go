@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
-	"os"
 	"strconv"
 	"strings"
 
@@ -67,22 +66,24 @@ blade create nginx config --list
 # Change config file to my.conf
 blade create nginx config --mode file --file my.conf
 
+# Change 'server' (assuming block id = 3) exposed on port 8899
+blade create nginx config --mode cmd --block-id 3 --set-config='listen=8899'
+
+# Set 'location /' (assuming block id = 4) proxy_pass to www.baidu.com
+blade create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=www.baidu.com'
+
+
+//!!!!!!
 //!!!
 # Change config file to my.conf, and delete nginx conf backup file if it exists
 blade create nginx config --file my.conf --force
-//!!!
-
-# Change 'server' (assuming block id = 1) exposed on port 8899
-blade create nginx config --mode cmd --block-id 3 --set-config='listen=8899'
-
-# Set 'location /' (assuming block id = 3) proxy_pass to www.baidu.com
-blade create nginx config --mode cmd --block-id 3 --set-config='proxy_pass=www.baidu.com'
 
 # Revert config change, uid = xxx
 blade destroy nginx config --uid 
 
 # Revert config change to the oldest config file
 blade destroy nginx config --force
+//!!!
 `,
 			ActionPrograms:   []string{NginxConfigBin},
 			ActionCategories: []string{category.Middleware},
@@ -130,11 +131,10 @@ func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spe
 		return response
 	}
 
-	activeFile, response := getNginxConfigLocation(ng.channel, ctx)
+	dir, activeFile, response := getNginxConfigLocation(ng.channel, ctx)
 	if response != nil {
 		return response
 	}
-	dir := activeFile[:strings.LastIndex(activeFile, string(os.PathSeparator))+1]
 	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
