@@ -21,7 +21,7 @@ const (
 
 type Config struct {
 	Blocks     []Block
-	Statements map[string]Statement
+	Statements []Statement
 	blockList  []ListResult //所有的block
 	idCounter  int          //blockId
 }
@@ -31,13 +31,13 @@ type Statement struct {
 }
 type IfStatement struct {
 	Condition  string //contains '(' ')'
-	Statements map[string]Statement
+	Statements []Statement
 }
 type Block struct {
 	Header       string //contains Type
 	Type         string //e.g. location, server
 	Blocks       []Block
-	Statements   map[string]Statement
+	Statements   []Statement
 	IfStatements []IfStatement
 }
 type mappingVisitor struct {
@@ -48,26 +48,24 @@ type mappingVisitor struct {
 }
 
 func newConfig() *Config {
-	return &Config{Statements: make(map[string]Statement)}
+	return &Config{}
 }
 
 func NewBlock() *Block {
-	block := &Block{Statements: make(map[string]Statement)}
-	return block
+	return &Block{}
 }
 func NewStatement() *Statement {
 	return &Statement{}
 }
 func newIfStatement() *IfStatement {
-	return &IfStatement{Statements: make(map[string]Statement)}
+	return &IfStatement{}
 }
 func newMappingVisitor() NginxVisitor {
 	return &mappingVisitor{Config: newConfig(), context: nil}
 }
 func (v *mappingVisitor) VisitConfig(ctx *ConfigContext) interface{} {
 	for _, s := range ctx.AllStatement() {
-		v.context = v.Config.Statements
-		s.Accept(v)
+		v.Config.Statements = append(v.Config.Statements, s.Accept(v).(Statement))
 	}
 	for _, s := range ctx.AllBlock() {
 		v.parentId = 0
@@ -78,18 +76,14 @@ func (v *mappingVisitor) VisitConfig(ctx *ConfigContext) interface{} {
 }
 
 func (v *mappingVisitor) VisitStatement(ctx *StatementContext) interface{} {
-	m := v.context.(map[string]Statement)
 	if ctx.RewriteStatement() != nil {
-		s := ctx.RewriteStatement().Accept(v).(Statement)
-		m[s.Key] = s
+		return ctx.RewriteStatement().Accept(v).(Statement)
 	}
 	if ctx.GenericStatement() != nil {
-		s := ctx.GenericStatement().Accept(v).(Statement)
-		m[s.Key] = s
+		return ctx.GenericStatement().Accept(v).(Statement)
 	}
 	if ctx.RegexHeaderStatement() != nil {
-		s := ctx.RegexHeaderStatement().Accept(v).(Statement)
-		m[s.Key] = s
+		return ctx.RegexHeaderStatement().Accept(v).(Statement)
 	}
 	return nil
 }
@@ -132,8 +126,7 @@ func (v *mappingVisitor) VisitBlock(ctx *BlockContext) interface{} {
 	}
 
 	for _, s := range ctx.AllStatement() {
-		v.context = block.Statements
-		s.Accept(v)
+		block.Statements = append(block.Statements, s.Accept(v).(Statement))
 	}
 	for _, s := range ctx.AllBlock() {
 		child := s.Accept(v).(Block)
@@ -158,8 +151,7 @@ func (v *mappingVisitor) VisitIfStatement(ctx *IfStatementContext) interface{} {
 	ifStatement := newIfStatement()
 	ifStatement.Condition = ctx.IfBody().Accept(v).(string)
 	for _, s := range ctx.AllStatement() {
-		v.context = ifStatement.Statements
-		s.Accept(v)
+		ifStatement.Statements = append(ifStatement.Statements, s.Accept(v).(Statement))
 	}
 	return *ifStatement
 }
@@ -244,12 +236,12 @@ func (c *IfStatement) dumpToFile(file *os.File, space string, indent, delta int)
 	writeWithIndent(file, space, indent, "}\n")
 }
 
-func dumpAllStatements(file *os.File, space string, indent int, m map[string]Statement) {
-	if m == nil {
+func dumpAllStatements(file *os.File, space string, indent int, statements []Statement) {
+	if statements == nil {
 		return
 	}
-	for k, v := range m {
-		writeWithIndent(file, space, indent, fmt.Sprintf("%s%s%s ;\n", k, space, v.Value))
+	for _, s := range statements {
+		writeWithIndent(file, space, indent, fmt.Sprintf("%s%s%s ;\n", s.Key, space, s.Value))
 	}
 }
 
@@ -269,22 +261,11 @@ func writeWithIndent(file *os.File, space string, indent int, s string) {
 	}
 }
 
-//func IsValidBlockHeader(header string) bool {
-//	allBlockHeader := []string{server, http, upstream, events, location}
-//	for _, i := range allBlockHeader {
-//		if i == header {
-//			return true
-//		}
-//	}
-//	return false
-//}
-
 type ListResult struct {
 	Id     int    `json:"id"`
 	Type   string `json:"type"`
 	Header string `json:"blockHeader"`
-	//ParentId int    `json:"parentId"` //parent block id
-	Block *Block `json:"-"` //don't export
+	Block  *Block `json:"-"` //don't export
 }
 
 func newListResult(block *Block, id int) *ListResult {
@@ -292,8 +273,7 @@ func newListResult(block *Block, id int) *ListResult {
 		Id:     id,
 		Block:  block,
 		Header: block.Header,
-		//ParentId: parentId,
-		Type: block.Type,
+		Type:   block.Type,
 	}
 }
 
@@ -343,8 +323,8 @@ func fmtBlockName(block *Block, id int) string {
 	desc := block.Header
 	if block.Type == Server {
 		desc = Server + "{"
-		serverName := block.Statements["server_name"].Value
-		port := block.Statements["listen"].Value
+		serverName := findStatement(block.Statements, "server_name")
+		port := findStatement(block.Statements, "listen")
 		if serverName == "" {
 			serverName = "unknown_host"
 		}
@@ -361,4 +341,27 @@ func fmtBlockName(block *Block, id int) string {
 		desc += "}"
 	}
 	return fmt.Sprintf("[%s] (id=%d)", desc, id)
+}
+
+func findStatement(arr []Statement, key string) string {
+	for _, s := range arr {
+		if s.Key == key {
+			return s.Value
+		}
+	}
+	return ""
+}
+
+func SetStatement(arr []Statement, k, v string, addNew bool) []Statement {
+	if addNew {
+		return append(arr, Statement{Key: k, Value: v})
+	} else {
+		for i := 0; i < len(arr); i++ {
+			if arr[i].Key == k {
+				arr[i].Value = v
+				return arr
+			}
+		}
+		return append(arr, Statement{Key: k, Value: v})
+	}
 }

@@ -32,15 +32,17 @@ type ResponseActionSpec struct {
 //TODO 支持匹配冲突问题，即多个匹配都满足的情况
 //TODO 支持路由类型的响应替换？
 //TODO 支持html文件类型，解决方案是自己启动一个web server
+//TODO version chain
 
 //TODO 配置修改bug
 //TODO 检验保证响应替换
 //TODO macOS
 //TODO Windows
-//单测
-//全部仓库
+//TODO 单测
+//TODO 全部仓库
 
 //目前暂定只支持固定url响应替换，而不支持regex
+
 func NewResponseActionSpec() spec.ExpActionCommandSpec {
 	return &ResponseActionSpec{
 		spec.BaseExpActionCommandSpec{
@@ -180,7 +182,6 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	cmd := ""
 	if util.IsExist(backup) {
 		//don't create backup
-		//TODO version chain
 		cmd = fmt.Sprintf("cp -f %s %s", name, activeFile)
 	} else {
 		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, name, activeFile)
@@ -253,22 +254,22 @@ func createNewLocationBlock(path, code, body, header, contentType string) (*pars
 	}
 	hasContentType := false
 	for _, pair := range pairs {
-		//FIXME 把map变为arr 
-		statement := parser.Statement{Key: "add_header", Value: fmt.Sprintf("%s: %s", pair[0], pair[1])}
-		block.Statements[statement.Key] = statement
-		if statement.Key == contentTypeHeaderNameLower ||
-			statement.Key == contentTypeHeaderNameUpper {
+		//FIXME 把map变为arr
+		block.Statements = parser.SetStatement(block.Statements, "add_header",
+			fmt.Sprintf("%s: %s", pair[0], pair[1]), true)
+		if pair[0] == contentTypeHeaderNameLower ||
+			pair[0] == contentTypeHeaderNameUpper {
 			hasContentType = true
 		}
 	}
 	if !hasContentType {
-		block.Statements["add_header"] = parser.Statement{Key: "add_header", Value: fmt.Sprintf("Content-Type '%s'", contentType)}
+		block.Statements = parser.SetStatement(block.Statements, "add_header",
+			fmt.Sprintf("Content-Type '%s'", contentType), true)
 	}
 
 	if _, err := strconv.Atoi(code); err != nil {
 		return nil, spec.ReturnFail(spec.ParameterInvalid, fmt.Sprintf("--code=%s is not valid, %s", code, err))
 	}
-	statement := parser.Statement{Key: "return", Value: fmt.Sprintf("%s '%s'", code, body)}
-	block.Statements[statement.Key] = statement
+	block.Statements = parser.SetStatement(block.Statements, "return", fmt.Sprintf("%s '%s'", code, body), true)
 	return block, nil
 }

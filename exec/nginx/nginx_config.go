@@ -79,7 +79,7 @@ blade create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=www.b
 blade create nginx config --file my.conf --force
 
 # Revert config change, uid = xxx
-blade destroy nginx config --uid 
+blade destroy nginx config --uid
 
 # Revert config change to the oldest config file
 blade destroy nginx config --force
@@ -212,9 +212,10 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 		if blockId == 0 {
 			//TODO key is not unique
 			//目前还是替换
-			config.Statements[k] = parser.Statement{Key: k, Value: v}
+			config.Statements = parser.SetStatement(config.Statements, k, v, false)
 		} else {
-			blocksList[blockId-1].Block.Statements[k] = parser.Statement{Key: k, Value: v}
+			statements := blocksList[blockId-1].Block.Statements
+			blocksList[blockId-1].Block.Statements = parser.SetStatement(statements, k, v, false)
 		}
 	}
 	name := "nginx.chaosblade.tmp.conf"
