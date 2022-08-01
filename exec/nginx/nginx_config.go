@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
-	"os"
 	"strconv"
 	"strings"
 
@@ -16,8 +15,12 @@ import (
 const (
 	NginxConfigBin   = "chaos_nginxconfig"
 	configBackupName = "nginx.conf.chaosblade.back"
+	fileMode         = "file"
+	cmdMode          = "cmd"
 )
 
+//TODO 支持版本链
+//TODO kv的key是可以重复的！
 type ConfigActionSpec struct {
 	spec.BaseExpActionCommandSpec
 }
@@ -26,6 +29,10 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 	return &ConfigActionSpec{
 		spec.BaseExpActionCommandSpec{
 			ActionMatchers: []spec.ExpFlagSpec{
+				&spec.ExpFlag{
+					Name: "mode",
+					Desc: fmt.Sprintf("The configuration change mode (%s or %s)", fileMode, cmdMode),
+				},
 				&spec.ExpFlag{
 					Name: "file",
 					Desc: "The new nginx.conf file",
@@ -40,35 +47,43 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 				},
 			},
 			ActionFlags: []spec.ExpFlagSpec{
-				&spec.ExpFlag{
-					Name:   "force",
-					Desc:   "ChaosBlade will delete config backup file if it exists",
-					NoArgs: true,
-				},
+				// &spec.ExpFlag{
+				// 	Name:   "force",
+				// 	Desc:   "ChaosBlade will delete config backup file if it exists",
+				// 	NoArgs: true,
+				// },
 				&spec.ExpFlag{
 					Name:   "list",
 					Desc:   "List all nginx config blocks",
 					NoArgs: true,
 				},
-				//&spec.ExpFlag{
-				//	Name:   "pretty",
-				//	Desc:   "Print all nginx config blocks in pretty format",
-				//	NoArgs: true,
-				//},
 			},
 			ActionExecutor: &NginxConfigExecutor{},
 			ActionExample: `
 # List all nginx.conf blocks
 blade create nginx config --list
 
-# Change 'server' (assuming block id = 1) exposed on port 8899
-blade create nginx config --block-id 3 --set-config='listen=8899'
+# Change config file to my.conf
+blade create nginx config --mode file --file my.conf
 
-# Set 'location /' (assuming block id = 3) proxy_pass to www.baidu.com
-blade create nginx config --block-id 3 --set-config='proxy_pass=www.baidu.com'
+# Change 'server' (assuming block id = 3) exposed on port 8899
+blade create nginx config --mode cmd --block-id 3 --set-config='listen=8899'
 
-# Cancel config change
-blade destroy nginx config
+# Set 'location /' (assuming block id = 4) proxy_pass to www.baidu.com
+blade create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=www.baidu.com'
+
+
+//!!!!!!
+//!!!
+# Change config file to my.conf, and delete nginx conf backup file if it exists
+blade create nginx config --file my.conf --force
+
+# Revert config change, uid = xxx
+blade destroy nginx config --uid 
+
+# Revert config change to the oldest config file
+blade destroy nginx config --force
+//!!!
 `,
 			ActionPrograms:   []string{NginxConfigBin},
 			ActionCategories: []string{category.Middleware},
@@ -116,11 +131,10 @@ func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spe
 		return response
 	}
 
-	activeFile, response := getNginxConfigLocation(ng.channel, ctx)
+	dir, activeFile, response := getNginxConfigLocation(ng.channel, ctx)
 	if response != nil {
 		return response
 	}
-	dir := activeFile[:strings.LastIndex(activeFile, string(os.PathSeparator))+1]
 	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
@@ -136,38 +150,39 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 		config.ListAllBlocks()
 		return spec.Success()
 	}
-
+	mode := model.ActionFlags["mode"]
 	newFile := model.ActionFlags["file"]
-	if newFile == "" {
-		//create new config
+	switch mode {
+	case fileMode:
+		if newFile == "" || !util.IsExist(newFile) || util.IsDir(newFile) {
+			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file '%s' not exists", newFile))
+		}
+	case cmdMode:
 		if config == nil {
 			config, _ = parser.LoadConfig(activeFile)
 		}
-		newFile, _ = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
-		// return nil
-	} else {
-		if !util.IsExist(newFile) || util.IsDir(newFile) {
-			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file %s not exists", newFile))
+		var resp *spec.Response
+		newFile, resp = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
+		if resp != nil {
+			return resp
 		}
+	default:
+		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
 	}
 	if response := testNginxConfig(ng.channel, ctx, newFile, dir); response != nil {
 		return response
 	}
 
+	cmd := ""
 	if util.IsExist(backup) {
-		force := model.ActionFlags["force"] == "true"
-		if force {
-			if response := ng.channel.Run(ctx, fmt.Sprintf("rm %s", backup), ""); !response.Success {
-				return response
-			}
-		} else {
-			return spec.ReturnFail(spec.OsCmdExecFailed,
-				fmt.Sprintf("cannot change config due to backup file %s exists", backup))
-		}
+		//don't create backup
+		//TODO version chain
+		cmd = fmt.Sprintf("cp -f %s %s", newFile, activeFile)
+	} else {
+		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, newFile, activeFile)
 	}
 
-	cmd := fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, newFile, activeFile)
-	if model.ActionFlags["file"] == "" {
+	if model.ActionFlags["mode"] == cmdMode {
 		// remove auto generated config
 		cmd += fmt.Sprintf(" && rm %s", newFile)
 	}
@@ -183,17 +198,20 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 func createNewConfig(config *parser.Config, id string, newKV string) (string, *spec.Response) {
 	blocksList := config.GetBlocksList()
 	blockId, err := strconv.Atoi(id)
+	// fmt.Println("id=", id, err)
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
-		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("block-id '%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
+		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--block-id='%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}
 	for _, kv := range strings.Split(newKV, ";") {
-		arr := strings.Split(strings.Trim(kv, " "), "=")
-		if len(arr) != 2 {
-			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("set-config '%s' is not valid", newKV))
+		arr := strings.Split(strings.TrimSpace(kv), "=")
+		if newKV == "" || len(arr) != 2 {
+			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--set-config='%s' is not valid", newKV))
 		}
-		k := strings.Trim(arr[0], " ")
-		v := strings.Trim(arr[1], " ")
+		k := strings.TrimSpace(arr[0])
+		v := strings.TrimSpace(arr[1])
 		if blockId == 0 {
+			//TODO key is not unique
+			//目前还是替换
 			config.Statements[k] = parser.Statement{Key: k, Value: v}
 		} else {
 			blocksList[blockId-1].Block.Statements[k] = parser.Statement{Key: k, Value: v}
@@ -208,6 +226,10 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 }
 
 func (ng *NginxConfigExecutor) stop(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+	mode := model.ActionFlags["mode"]
+	if mode != "" {
+		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--mode cannot be %s when destroying Nginx config experiment", mode))
+	}
 	if !util.IsExist(backup) || util.IsDir(backup) {
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
 	}

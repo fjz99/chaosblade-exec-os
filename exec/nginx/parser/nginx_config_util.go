@@ -10,6 +10,7 @@ import (
 )
 
 //java org.antlr.v4.Tool -Dlanguage=Go -visitor -no-listener .\Nginx.g4
+//TODO statement key is not unique.....
 const (
 	Server   = "server"
 	Http     = "http"
@@ -50,11 +51,11 @@ func newConfig() *Config {
 	return &Config{Statements: make(map[string]Statement)}
 }
 
-func newBlock() *Block {
+func NewBlock() *Block {
 	block := &Block{Statements: make(map[string]Statement)}
 	return block
 }
-func newStatement() *Statement {
+func NewStatement() *Statement {
 	return &Statement{}
 }
 func newIfStatement() *IfStatement {
@@ -94,7 +95,7 @@ func (v *mappingVisitor) VisitStatement(ctx *StatementContext) interface{} {
 }
 
 func (v *mappingVisitor) VisitGenericStatement(ctx *GenericStatementContext) interface{} {
-	s := newStatement()
+	s := NewStatement()
 	children := ctx.GetChildren()
 	s.Key = children[0].GetPayload().(antlr.Token).GetText()
 	s.Value = concatChildrenString(children[1:], " ")
@@ -102,14 +103,14 @@ func (v *mappingVisitor) VisitGenericStatement(ctx *GenericStatementContext) int
 }
 
 func (v *mappingVisitor) VisitRegexHeaderStatement(ctx *RegexHeaderStatementContext) interface{} {
-	s := newStatement()
+	s := NewStatement()
 	s.Key = ctx.REGEXP_PREFIXED().GetText()
 	s.Value = ctx.Value().GetText()
 	return *s
 }
 
 func (v *mappingVisitor) VisitRewriteStatement(ctx *RewriteStatementContext) interface{} {
-	s := newStatement()
+	s := NewStatement()
 	children := ctx.GetChildren()
 	s.Key = "rewrite"
 	s.Value = concatChildrenString(children[1:], " ")
@@ -117,7 +118,7 @@ func (v *mappingVisitor) VisitRewriteStatement(ctx *RewriteStatementContext) int
 }
 
 func (v *mappingVisitor) VisitBlock(ctx *BlockContext) interface{} {
-	block := newBlock()
+	block := NewBlock()
 	if ctx.GenericBlockHeader() != nil {
 		block.Header = ctx.GenericBlockHeader().Accept(v).(string)
 	}

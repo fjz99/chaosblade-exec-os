@@ -34,18 +34,18 @@ func TestRegex(t *testing.T) {
 	pid, response := getNginxPid(channel.NewLocalChannel(), context.Background())
 	fmt.Println(pid, response)
 
-	loc, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
-	fmt.Println(loc, res)
+	dir, loc, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
+	fmt.Println(dir, loc, res)
 }
 
 func TestCrash(t *testing.T) {
 	executor := NginxCrashExecutor{channel: channel.NewLocalChannel()}
 	model := spec.ExpModel{}
-	response := executor.Exec("", context.Background(), &model)
-	fmt.Println(*response)
+	// response := executor.Exec("", context.Background(), &model)
+	// fmt.Println(*response)
 
 	//cancel
-	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(*response)
 }
 
@@ -56,8 +56,8 @@ func TestRestart(t *testing.T) {
 	fmt.Println(*response)
 
 	//cancel
-	response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
-	fmt.Println(*response)
+	// response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	// fmt.Println(*response)
 }
 
 func TestConfigChange(t *testing.T) {
@@ -66,8 +66,9 @@ func TestConfigChange(t *testing.T) {
 	executor.SetChannel(channel.NewLocalChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
-	// model.ActionFlags["file"] = "conf/ok.conf"
-	model.ActionFlags["file"] = "conf/wrong.conf"
+	model.ActionFlags["mode"] = "file"
+	model.ActionFlags["file"] = "conf/ok.conf"
+	// model.ActionFlags["file"] = "conf/wrong.conf"
 	response := executor.Exec("", context.Background(), &model)
 	fmt.Println(*response)
 
@@ -109,11 +110,12 @@ func TestKVChange(t *testing.T) {
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["list"] = "true"
 
-	// model.ActionFlags["set-config"]="listen=9999"
-	// model.ActionFlags["block-id"]="3"
-
-	model.ActionFlags["set-config"]="proxy_pass=https://www.baidu.com"
-	model.ActionFlags["block-id"]="4"
+	model.ActionFlags["mode"] = "cmd"
+	model.ActionFlags["set-config"] = "listen=9999"
+	model.ActionFlags["block-id"] = "3"
+	// http.server.location=xxx
+	// model.ActionFlags["set-config"] = "proxy_pass=https://www.taobao.com"
+	// model.ActionFlags["block-id"] = "4"
 
 	response := executor.Exec("dsadsad2", context.Background(), &model)
 	fmt.Println(response)
@@ -121,6 +123,35 @@ func TestKVChange(t *testing.T) {
 
 func TestCancelKVChange(t *testing.T) {
 	s := NewConfigActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+	// model.ActionFlags["mode"] = "file"
+
+	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	fmt.Println(response)
+}
+
+func TestChangeResponse(t *testing.T) {
+	s := NewResponseActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(channel.NewLocalChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
+	model.ActionFlags["type"] = "json"
+	model.ActionFlags["path"] = "/test"
+	model.ActionFlags["code"] = "200"
+	model.ActionFlags["header"] = ""
+	model.ActionFlags["body"] = `{"a":1}`
+	// model.ActionFlags["body"] = "hello!"
+
+	response := executor.Exec("dsadsad2", context.Background(), &model)
+	fmt.Println(response)
+}
+
+func TestCancelResponseChange(t *testing.T) {
+	s := NewResponseActionSpec()
 	executor := s.Executor()
 	executor.SetChannel(channel.NewLocalChannel())
 	model := spec.ExpModel{}
