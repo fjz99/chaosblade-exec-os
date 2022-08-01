@@ -29,7 +29,7 @@ HOST=http://101.201.210.248/
 ./chaos_os create nginx config --mode cmd --block-id 3 --set-config='listen=8899'
 ./chaos_os destroy nginx config
 
-./chaos_os create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=https://www.taobao.com'
+./chaos_os create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=https://www.tmall.com'
 ./chaos_os destroy nginx config
 
 #4
@@ -41,6 +41,6 @@ curl -v "${HOST}/test"
 curl -v "${HOST}/test"
 ./chaos_os destroy nginx response
 
-./chaos_os create nginx response --path /test --code 200 --body '{"a":1}' --type json
+./chaos_os create nginx response --path /test --code 200 --body '{"a":1}'
 curl -v "${HOST}/test"
 ./chaos_os destroy nginx response

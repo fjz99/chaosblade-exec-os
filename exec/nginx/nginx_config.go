@@ -198,7 +198,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 func createNewConfig(config *parser.Config, id string, newKV string) (string, *spec.Response) {
 	blocksList := config.GetBlocksList()
 	blockId, err := strconv.Atoi(id)
-	fmt.Println("id=", id, err)
+	// fmt.Println("id=", id, err)
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
 		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--block-id='%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}

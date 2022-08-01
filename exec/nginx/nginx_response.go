@@ -29,9 +29,17 @@ type ResponseActionSpec struct {
 }
 
 //TODO regex支持
-//TODO 支持匹配冲突问题，即regex情况下的多个匹配都满足的情况
+//TODO 支持匹配冲突问题，即多个匹配都满足的情况
 //TODO 支持路由类型的响应替换？
 //TODO 支持html文件类型，解决方案是自己启动一个web server
+
+//TODO 配置修改bug
+//TODO 检验保证响应替换
+//TODO macOS
+//TODO Windows
+//单测
+//全部仓库
+
 //目前暂定只支持固定url响应替换，而不支持regex
 func NewResponseActionSpec() spec.ExpActionCommandSpec {
 	return &ResponseActionSpec{
@@ -63,7 +71,7 @@ func NewResponseActionSpec() spec.ExpActionCommandSpec {
 				},
 				&spec.ExpFlag{
 					Name:    "type",
-					Desc:    "new response body type, such as html, text/plain, json ,etc. this argument is same as setting --header='content-type=html'",
+					Desc:    "new response body type",
 					Default: "json",
 				},
 			},
@@ -154,7 +162,7 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	}
 	newBlockList := []parser.Block{*newBlock}
 	for _, b := range server.Blocks {
-		if b.Type != newBlock.Type || b.Header != newBlock.Header{
+		if b.Type != newBlock.Type || b.Header != newBlock.Header {
 			newBlockList = append(newBlockList, b)
 		}
 	}
@@ -245,7 +253,8 @@ func createNewLocationBlock(path, code, body, header, contentType string) (*pars
 	}
 	hasContentType := false
 	for _, pair := range pairs {
-		statement := parser.Statement{Key: pair[0], Value: pair[1]}
+		//FIXME 把map变为arr 
+		statement := parser.Statement{Key: "add_header", Value: fmt.Sprintf("%s: %s", pair[0], pair[1])}
 		block.Statements[statement.Key] = statement
 		if statement.Key == contentTypeHeaderNameLower ||
 			statement.Key == contentTypeHeaderNameUpper {
