@@ -136,7 +136,7 @@ func (ng *NginxResponseExecutor) Exec(suid string, ctx context.Context, model *s
 	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
-		return ng.stop(ctx, dir, activeFile, backup, model)
+		return ng.stop(ctx, activeFile, backup)
 	}
 	return ng.start(ctx, dir, activeFile, backup, model)
 }
@@ -151,7 +151,7 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	code := model.ActionFlags["code"]
 	body := model.ActionFlags["body"]
 	header := model.ActionFlags["header"]
-	
+
 	server, response := findServerBlock(config)
 	if response != nil {
 		return response
@@ -193,7 +193,7 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	return spec.ReturnSuccess("set response successfully")
 }
 
-func (ng *NginxResponseExecutor) stop(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+func (ng *NginxResponseExecutor) stop(ctx context.Context, activeFile, backup string) *spec.Response {
 	if !util.IsExist(backup) || util.IsDir(backup) {
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
 	}

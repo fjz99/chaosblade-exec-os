@@ -128,7 +128,7 @@ func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spe
 	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
-		return ng.stop(ctx, dir, activeFile, backup, model)
+		return ng.stop(ctx, activeFile, backup, model)
 	}
 	return ng.start(ctx, dir, activeFile, backup, model)
 }
@@ -213,7 +213,7 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 	return name, nil
 }
 
-func (ng *NginxConfigExecutor) stop(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+func (ng *NginxConfigExecutor) stop(ctx context.Context, activeFile, backup string, model *spec.ExpModel) *spec.Response {
 	mode := model.ActionFlags["mode"]
 	if mode != "" {
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--mode cannot be %s when destroying Nginx config experiment", mode))

@@ -65,7 +65,6 @@ func getNginxConfigLocation(channel spec.Channel, ctx context.Context) (string, 
 	regex := regexp.MustCompile("file (.*) test is successful")
 	location := regex.FindStringSubmatch(result)[1]
 	dir := location[:strings.LastIndex(location, string(os.PathSeparator))+1]
-	//location = location[:strings.LastIndex(location, "/")]
 	return dir, location, nil
 }
 
@@ -85,7 +84,7 @@ func parseMultipleKvPairs(newKV string) [][]string {
 	if newKV == "" {
 		return nil
 	}
-	pairs := [][]string{}
+	var pairs [][]string
 	newKV = strings.TrimSpace(newKV)
 	newKV = strings.TrimRight(newKV, ";")
 	for _, kv := range strings.Split(newKV, ";") {

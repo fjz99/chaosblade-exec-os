@@ -208,7 +208,9 @@ func (c *Config) EasyDumpToFile(fileName string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	c.DumpToFile(file, " ", 0, 4)
 	return nil
 }
