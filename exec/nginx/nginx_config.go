@@ -19,8 +19,6 @@ const (
 	cmdMode          = "cmd"
 )
 
-//TODO 支持版本链
-//TODO kv的key是可以重复的！
 type ConfigActionSpec struct {
 	spec.BaseExpActionCommandSpec
 }
@@ -47,11 +45,6 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 				},
 			},
 			ActionFlags: []spec.ExpFlagSpec{
-				// &spec.ExpFlag{
-				// 	Name:   "force",
-				// 	Desc:   "ChaosBlade will delete config backup file if it exists",
-				// 	NoArgs: true,
-				// },
 				&spec.ExpFlag{
 					Name:   "list",
 					Desc:   "List all nginx config blocks",
@@ -75,9 +68,6 @@ blade create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=www.b
 
 //!!!!!!
 //!!!
-# Change config file to my.conf, and delete nginx conf backup file if it exists
-blade create nginx config --file my.conf --force
-
 # Revert config change, uid = xxx
 blade destroy nginx config --uid
 
@@ -176,7 +166,6 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 	cmd := ""
 	if util.IsExist(backup) {
 		//don't create backup
-		//TODO version chain
 		cmd = fmt.Sprintf("cp -f %s %s", newFile, activeFile)
 	} else {
 		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, newFile, activeFile)
@@ -210,8 +199,6 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 		k := strings.TrimSpace(arr[0])
 		v := strings.TrimSpace(arr[1])
 		if blockId == 0 {
-			//TODO key is not unique
-			//目前还是替换
 			config.Statements = parser.SetStatement(config.Statements, k, v, false)
 		} else {
 			statements := blocksList[blockId-1].Block.Statements

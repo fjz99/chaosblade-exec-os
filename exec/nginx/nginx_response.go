@@ -34,14 +34,12 @@ type ResponseActionSpec struct {
 //TODO 支持html文件类型，解决方案是自己启动一个web server
 //TODO version chain
 
-//TODO 配置修改bug
 //TODO 检验保证响应替换
 //TODO macOS
 //TODO Windows
 //TODO 单测
 //TODO 全部仓库
-
-//目前暂定只支持固定url响应替换，而不支持regex
+//TODO 暂时不指定id，默认是第一个server内增加location
 
 func NewResponseActionSpec() spec.ExpActionCommandSpec {
 	return &ResponseActionSpec{
@@ -153,7 +151,7 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	code := model.ActionFlags["code"]
 	body := model.ActionFlags["body"]
 	header := model.ActionFlags["header"]
-	//暂时不指定id，默认是第一个server内增加location
+	
 	server, response := findServerBlock(config)
 	if response != nil {
 		return response
@@ -225,7 +223,6 @@ func getContentType(contentTypeKey string) (string, *spec.Response) {
 	return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--type %s is not supported, only supports ( %s )", contentTypeKey, support))
 }
 
-//TODO not only first
 func findServerBlock(config *parser.Config) (*parser.Block, *spec.Response) {
 	var http *parser.Block = nil
 	for i := 0; i < len(config.Blocks); i++ {
@@ -254,7 +251,6 @@ func createNewLocationBlock(path, code, body, header, contentType string) (*pars
 	}
 	hasContentType := false
 	for _, pair := range pairs {
-		//FIXME 把map变为arr
 		block.Statements = parser.SetStatement(block.Statements, "add_header",
 			fmt.Sprintf("%s: %s", pair[0], pair[1]), true)
 		if pair[0] == contentTypeHeaderNameLower ||

@@ -10,7 +10,6 @@ import (
 )
 
 //java org.antlr.v4.Tool -Dlanguage=Go -visitor -no-listener .\Nginx.g4
-//TODO statement key is not unique.....
 const (
 	Server   = "server"
 	Http     = "http"
