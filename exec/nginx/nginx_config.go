@@ -13,10 +13,9 @@ import (
 )
 
 const (
-	NginxConfigBin   = "chaos_nginxconfig"
-	configBackupName = "nginx.conf.chaosblade.back"
-	fileMode         = "file"
-	cmdMode          = "cmd"
+	NginxConfigBin = "chaos_nginxconfig"
+	fileMode       = "file"
+	cmdMode        = "cmd"
 )
 
 type ConfigActionSpec struct {
@@ -115,25 +114,23 @@ func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spe
 	// if true {
 	// 	result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
 	// 	return spec.ReturnResultIgnoreCode(result)
-	// }
-	_, response := getNginxPid(ng.channel, ctx) // nginx process
-	if response != nil {
+	// } // nginx process
+	if response := testNginxExists(ng.channel, ctx); response != nil {
 		return response
 	}
 
-	dir, activeFile, response := getNginxConfigLocation(ng.channel, ctx)
+	_, activeFile, _, response := getNginxConfigLocation(ng.channel, ctx)
 	if response != nil {
 		return response
 	}
-	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
-		return ng.stop(ctx, activeFile, backup, model)
+		return ng.stop(ctx, model)
 	}
-	return ng.start(ctx, dir, activeFile, backup, model)
+	return ng.start(ctx, activeFile, model)
 }
 
-func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, model *spec.ExpModel) *spec.Response {
 	var config *parser.Config
 	if model.ActionFlags["list"] == "true" {
 		config, _ = parser.LoadConfig(activeFile)
@@ -159,29 +156,8 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, dir, activeFile, backu
 	default:
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
 	}
-	if response := testNginxConfig(ng.channel, ctx, newFile, dir); response != nil {
-		return response
-	}
 
-	cmd := ""
-	if util.IsExist(backup) {
-		//don't create backup
-		cmd = fmt.Sprintf("cp -f %s %s", newFile, activeFile)
-	} else {
-		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, newFile, activeFile)
-	}
-
-	if model.ActionFlags["mode"] == cmdMode {
-		// remove auto generated config
-		cmd += fmt.Sprintf(" && rm %s", newFile)
-	}
-	cmd += " && nginx -s reload"
-	response := ng.channel.Run(ctx, cmd, "")
-	if !response.Success {
-		return response
-	}
-
-	return spec.ReturnSuccess("nginx config changed")
+	return swapNginxConfig(ng.channel, ctx, newFile, model)
 }
 
 func createNewConfig(config *parser.Config, id string, newKV string) (string, *spec.Response) {
@@ -213,20 +189,12 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 	return name, nil
 }
 
-func (ng *NginxConfigExecutor) stop(ctx context.Context, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+func (ng *NginxConfigExecutor) stop(ctx context.Context, model *spec.ExpModel) *spec.Response {
 	mode := model.ActionFlags["mode"]
 	if mode != "" {
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--mode cannot be %s when destroying Nginx config experiment", mode))
 	}
-	if !util.IsExist(backup) || util.IsDir(backup) {
-		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
-	}
-
-	response := ng.channel.Run(ctx, fmt.Sprintf("mv -f %s %s && nginx -s reload", backup, activeFile), "")
-	if !response.Success {
-		return response
-	}
-	return spec.ReturnSuccess("nginx config restored")
+	return reloadNginxConfig(ng.channel, ctx)
 }
 
 func (ng *NginxConfigExecutor) SetChannel(channel spec.Channel) {

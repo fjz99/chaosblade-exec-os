@@ -31,11 +31,11 @@ func TestRegex(t *testing.T) {
 	location = location[:strings.LastIndex(location, "/")]
 	fmt.Println(location)
 
-	pid, response := getNginxPid(channel.NewLocalChannel(), context.Background())
-	fmt.Println(pid, response)
+	response := testNginxExists(channel.NewLocalChannel(), context.Background())
+	fmt.Println(response)
 
-	dir, loc, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
-	fmt.Println(dir, loc, res)
+	dir, loc, backup, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
+	fmt.Println(dir, loc, backup, res)
 }
 
 func TestCrash(t *testing.T) {
@@ -111,7 +111,7 @@ func TestKVChange(t *testing.T) {
 	// model.ActionFlags["list"] = "true"
 
 	model.ActionFlags["mode"] = "cmd"
-	
+
 	// model.ActionFlags["set-config"] = "listen=9999"
 	// model.ActionFlags["block-id"] = "3"
 

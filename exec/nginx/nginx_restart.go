@@ -2,7 +2,6 @@ package nginx
 
 import (
 	"context"
-	"fmt"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 )
@@ -57,11 +56,6 @@ func (*NginxRestartExecutor) Name() string {
 }
 
 func (ng *NginxRestartExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {
-	commands := []string{"kill"}
-	if response, ok := ng.channel.IsAllCommandsAvailable(ctx, commands); !ok {
-		return response
-	}
-
 	if _, ok := spec.IsDestroy(ctx); ok {
 		return spec.ReturnFail(spec.OsCmdExecFailed, "cancel 'nginx restart' is meaningless")
 	}
@@ -69,19 +63,13 @@ func (ng *NginxRestartExecutor) Exec(suid string, ctx context.Context, model *sp
 }
 
 func (ng *NginxRestartExecutor) start(ctx context.Context) *spec.Response {
-	allPid, response := getNginxPid(ng.channel, ctx)
-	if response != nil {
+	if response := testNginxExists(ng.channel, ctx); response != nil {
 		return response
 	}
-	for _, pid := range allPid {
-		response = ng.channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
-		if !response.Success {
-			return response
-		}
+	if response := killNginx(ng.channel, ctx); response != nil {
+		return response
 	}
-
-	response = ng.channel.Run(ctx, "nginx", "")
-	return response
+	return startNginx(ng.channel, ctx)
 }
 
 func (ng *NginxRestartExecutor) SetChannel(channel spec.Channel) {

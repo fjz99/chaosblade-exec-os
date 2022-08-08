@@ -8,7 +8,6 @@ import (
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
-	"github.com/chaosblade-io/chaosblade-spec-go/util"
 )
 
 const (
@@ -124,24 +123,22 @@ func (*NginxResponseExecutor) Name() string {
 }
 
 func (ng *NginxResponseExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {
-	_, response := getNginxPid(ng.channel, ctx) // nginx process
-	if response != nil {
+	if response := testNginxExists(ng.channel, ctx); response != nil {
 		return response
 	}
 
-	dir, activeFile, response := getNginxConfigLocation(ng.channel, ctx)
+	_, activeFile, _, response := getNginxConfigLocation(ng.channel, ctx)
 	if response != nil {
 		return response
 	}
-	backup := dir + configBackupName
 
 	if _, ok := spec.IsDestroy(ctx); ok {
-		return ng.stop(ctx, activeFile, backup)
+		return ng.stop(ctx)
 	}
-	return ng.start(ctx, dir, activeFile, backup, model)
+	return ng.start(ctx, activeFile, model)
 }
 
-func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, backup string, model *spec.ExpModel) *spec.Response {
+func (ng *NginxResponseExecutor) start(ctx context.Context, activeFile string, model *spec.ExpModel) *spec.Response {
 	contentType, response := getContentType(model.ActionFlags["type"])
 	if response != nil {
 		return response
@@ -173,36 +170,12 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, dir, activeFile, bac
 	if err != nil {
 		return spec.ReturnFail(spec.OsCmdExecFailed, err.Error())
 	}
-	if response := testNginxConfig(ng.channel, ctx, name, dir); response != nil {
-		return response
-	}
 
-	cmd := ""
-	if util.IsExist(backup) {
-		//don't create backup
-		cmd = fmt.Sprintf("cp -f %s %s", name, activeFile)
-	} else {
-		cmd = fmt.Sprintf("cp %s %s && cp -f %s %s", activeFile, backup, name, activeFile)
-	}
-	cmd += fmt.Sprintf(" && rm %s && nginx -s reload", name)
-	response = ng.channel.Run(ctx, cmd, "")
-	if !response.Success {
-		return response
-	}
-
-	return spec.ReturnSuccess("set response successfully")
+	return swapNginxConfig(ng.channel, ctx, name, model)
 }
 
-func (ng *NginxResponseExecutor) stop(ctx context.Context, activeFile, backup string) *spec.Response {
-	if !util.IsExist(backup) || util.IsDir(backup) {
-		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
-	}
-
-	response := ng.channel.Run(ctx, fmt.Sprintf("mv -f %s %s && nginx -s reload", backup, activeFile), "")
-	if !response.Success {
-		return response
-	}
-	return spec.ReturnSuccess("nginx config restored")
+func (ng *NginxResponseExecutor) stop(ctx context.Context) *spec.Response {
+	return reloadNginxConfig(ng.channel, ctx)
 }
 
 func (ng *NginxResponseExecutor) SetChannel(channel spec.Channel) {

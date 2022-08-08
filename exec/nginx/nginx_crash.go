@@ -2,7 +2,6 @@ package nginx
 
 import (
 	"context"
-	"fmt"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 )
@@ -72,24 +71,14 @@ func (ng *NginxCrashExecutor) Exec(suid string, ctx context.Context, model *spec
 }
 
 func (ng *NginxCrashExecutor) start(ctx context.Context) *spec.Response {
-	allPid, response := getNginxPid(ng.channel, ctx)
-	if response != nil {
+	if response := testNginxExists(ng.channel, ctx); response != nil {
 		return response
 	}
-	// fmt.Println(allPid)
-	for _, pid := range allPid {
-		response = ng.channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
-		// fmt.Println(response)
-		if !response.Success {
-			return response
-		}
-	}
-	return response
+	return killNginx(ng.channel, ctx)
 }
 
 func (ng *NginxCrashExecutor) stop(ctx context.Context) *spec.Response {
-	response := ng.channel.Run(ctx, "nginx", "")
-	return response
+	return startNginx(ng.channel, ctx)
 }
 
 func (ng *NginxCrashExecutor) SetChannel(channel spec.Channel) {
