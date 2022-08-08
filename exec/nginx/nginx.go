@@ -55,13 +55,10 @@ func testNginxConfig(channel spec.Channel, ctx context.Context, file, dir string
 	file, _ = filepath.Abs(file)
 	tmpFile := fmt.Sprintf("%snginx_chaosblade_temp_%v.conf", dir, time.Now().Unix())
 	response := channel.Run(ctx, fmt.Sprintf("cp %s %s", file, tmpFile), "")
-	if response != nil {
+	if !response.Success {
 		return response
 	}
 	response = runNginxCommand(channel, ctx, fmt.Sprintf("-t -c %s", tmpFile))
-	if response != nil {
-		return response
-	}
 	_ = channel.Run(ctx, fmt.Sprintf("rm %s", tmpFile), "") //ignore response
 	if !response.Success || !strings.Contains(response.Result.(string), "successful") {
 		return response
@@ -98,10 +95,10 @@ func reloadNginxConfig(channel spec.Channel, ctx context.Context) *spec.Response
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
 	}
 
-	if response := restoreConfigFile(channel, ctx, backup, activeFile); response != nil {
+	if response := restoreConfigFile(channel, ctx, backup, activeFile); !response.Success  {
 		return response
 	}
-	if response := runNginxCommand(channel, ctx, "-s reload"); response != nil {
+	if response := runNginxCommand(channel, ctx, "-s reload"); !response.Success {
 		return response
 	}
 	return spec.ReturnSuccess("nginx config restored")
@@ -118,16 +115,16 @@ func swapNginxConfig(channel spec.Channel, ctx context.Context, newFile string, 
 
 	if model.ActionFlags["mode"] == cmdMode {
 		// remove auto generated config
-		if response := backupConfigFile(channel, ctx, backup, activeFile, newFile, true); response != nil {
+		if response := backupConfigFile(channel, ctx, backup, activeFile, newFile, true); !response.Success {
 			return response
 		}
 	} else {
-		if response := backupConfigFile(channel, ctx, backup, activeFile, newFile, false); response != nil {
+		if response := backupConfigFile(channel, ctx, backup, activeFile, newFile, false); !response.Success {
 			return response
 		}
 	}
 
-	if response := runNginxCommand(channel, ctx, "nginx -s reload"); !response.Success {
+	if response := runNginxCommand(channel, ctx, "-s reload"); !response.Success {
 		return response
 	}
 	return spec.ReturnSuccess("nginx config changed")

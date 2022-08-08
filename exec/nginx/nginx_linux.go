@@ -49,7 +49,7 @@ func killNginx(channel spec.Channel, ctx context.Context) *spec.Response {
 			return response
 		}
 	}
-	return response
+	return nil
 }
 
 func runNginxCommand(channel spec.Channel, ctx context.Context, args string) *spec.Response {

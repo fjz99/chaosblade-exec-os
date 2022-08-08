@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"context"
+
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 )
@@ -74,7 +75,11 @@ func (ng *NginxCrashExecutor) start(ctx context.Context) *spec.Response {
 	if response := testNginxExists(ng.channel, ctx); response != nil {
 		return response
 	}
-	return killNginx(ng.channel, ctx)
+	if response := killNginx(ng.channel, ctx); response != nil {
+		return response
+	} else {
+		return spec.Success()
+	}
 }
 
 func (ng *NginxCrashExecutor) stop(ctx context.Context) *spec.Response {
