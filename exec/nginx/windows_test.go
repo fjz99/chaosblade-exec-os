@@ -1,31 +1,16 @@
-//go:build !windows
-// +build !windows
+//go:build windows
+// +build windows
 
 package nginx
 
 import (
 	"context"
 	"fmt"
-	"github.com/chaosblade-io/chaosblade-spec-go/channel"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 	"regexp"
 	"strings"
 	"testing"
 )
-
-func TestPid(t *testing.T) {
-	localChannel := channel.LocalChannel{}
-	response := localChannel.Run(context.Background(),
-		`ps aux | grep -v grep | egrep 'nginx: master' | awk '{print $2}'`, "")
-	fmt.Println(response)
-}
-
-func TestCmd(t *testing.T) {
-	localChannel := channel.LocalChannel{}
-	response := localChannel.Run(context.Background(),
-		`ps aux | grep -v grep | egrep -o 'nginx: master.*' | egrep -o ' [^ ]*nginx.*'`, "")
-	fmt.Println(response)
-}
 
 func TestRegex(t *testing.T) {
 	regex := regexp.MustCompile("file (.*) test is successful")
@@ -34,26 +19,26 @@ func TestRegex(t *testing.T) {
 	location = location[:strings.LastIndex(location, "/")]
 	fmt.Println(location)
 
-	response := testNginxExists(channel.NewLocalChannel(), context.Background())
+	response := testNginxExists(NewCmdChannel(), context.Background())
 	fmt.Println(response)
 
-	dir, loc, backup, res := getNginxConfigLocation(channel.NewLocalChannel(), context.Background())
+	dir, loc, backup, res := getNginxConfigLocation(NewCmdChannel(), context.Background())
 	fmt.Println(dir, loc, backup, res)
 }
 
 func TestCrash(t *testing.T) {
-	executor := NginxCrashExecutor{channel: channel.NewLocalChannel()}
+	executor := NginxCrashExecutor{channel: NewCmdChannel()}
 	model := spec.ExpModel{}
-	// response := executor.Exec("", context.Background(), &model)
-	// fmt.Println(*response)
+	response := executor.Exec("", context.Background(), &model)
+	fmt.Println(*response)
 
 	//cancel
-	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
-	fmt.Println(*response)
+	//response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	//fmt.Println(*response)
 }
 
 func TestRestart(t *testing.T) {
-	executor := NginxRestartExecutor{channel: channel.NewLocalChannel()}
+	executor := NginxRestartExecutor{channel: NewCmdChannel()}
 	model := spec.ExpModel{}
 	response := executor.Exec("", context.Background(), &model)
 	fmt.Println(*response)
@@ -66,7 +51,7 @@ func TestRestart(t *testing.T) {
 func TestConfigChange(t *testing.T) {
 	s := NewConfigActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	model.ActionFlags["mode"] = "file"
@@ -74,16 +59,12 @@ func TestConfigChange(t *testing.T) {
 	// model.ActionFlags["file"] = "conf/wrong.conf"
 	response := executor.Exec("", context.Background(), &model)
 	fmt.Println(*response)
-
-	//cancel
-	// response = executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
-	// fmt.Println(*response)
 }
 
 func TestConfigChangeRevert(t *testing.T) {
 	s := NewConfigActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 
@@ -95,7 +76,7 @@ func TestConfigChangeRevert(t *testing.T) {
 func TestListBlock(t *testing.T) {
 	s := NewConfigActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	model.ActionFlags["list"] = "true"
@@ -108,7 +89,7 @@ func TestListBlock(t *testing.T) {
 func TestKVChange(t *testing.T) {
 	s := NewConfigActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["list"] = "true"
@@ -128,7 +109,7 @@ func TestKVChange(t *testing.T) {
 func TestCancelKVChange(t *testing.T) {
 	s := NewConfigActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["mode"] = "file"
@@ -140,7 +121,7 @@ func TestCancelKVChange(t *testing.T) {
 func TestChangeResponse(t *testing.T) {
 	s := NewResponseActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	model.ActionFlags["type"] = "json"
@@ -157,14 +138,10 @@ func TestChangeResponse(t *testing.T) {
 func TestCancelResponseChange(t *testing.T) {
 	s := NewResponseActionSpec()
 	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
+	executor.SetChannel(NewCmdChannel())
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 
 	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
 	fmt.Println(response)
-}
-
-func TestTmp(t *testing.T) {
-
 }

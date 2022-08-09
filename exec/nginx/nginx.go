@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 )
 
 const configBackupName = "nginx.conf.chaosblade.back"
@@ -30,6 +29,20 @@ func (*NginxCommandSpec) LongDesc() string {
 	return "Nginx experiment"
 }
 
+func NewNginxCommandSpec() spec.ExpModelCommandSpec {
+	return &NginxCommandSpec{
+		spec.BaseExpModelCommandSpec{
+			ExpActions: []spec.ExpActionCommandSpec{
+				NewCrashActionSpec(),
+				NewRestartActionSpec(),
+				NewConfigActionSpec(),
+				NewResponseActionSpec(),
+			},
+			ExpFlags: []spec.ExpFlagSpec{},
+		},
+	}
+}
+
 func startNginx(channel spec.Channel, ctx context.Context) *spec.Response {
 	return runNginxCommand(channel, ctx, "")
 }
@@ -46,24 +59,10 @@ func getNginxConfigLocation(channel spec.Channel, ctx context.Context) (string, 
 	}
 	regex := regexp.MustCompile("file (.*) test is successful")
 	location := regex.FindStringSubmatch(result)[1]
+	//location may be 'D:\nginx-1.9.9/conf/nginx.conf' on windows..
+	location, _ = filepath.Abs(location)
 	dir := location[:strings.LastIndex(location, string(os.PathSeparator))+1]
 	return dir, location, dir + configBackupName, nil
-}
-
-// nginx.conf may have 'include mime.types;' etc.
-func testNginxConfig(channel spec.Channel, ctx context.Context, file, dir string) *spec.Response {
-	file, _ = filepath.Abs(file)
-	tmpFile := fmt.Sprintf("%snginx_chaosblade_temp_%v.conf", dir, time.Now().Unix())
-	response := channel.Run(ctx, fmt.Sprintf("cp %s %s", file, tmpFile), "")
-	if !response.Success {
-		return response
-	}
-	response = runNginxCommand(channel, ctx, fmt.Sprintf("-t -c %s", tmpFile))
-	_ = channel.Run(ctx, fmt.Sprintf("rm %s", tmpFile), "") //ignore response
-	if !response.Success || !strings.Contains(response.Result.(string), "successful") {
-		return response
-	}
-	return nil
 }
 
 func parseMultipleKvPairs(newKV string) [][]string {
@@ -95,7 +94,7 @@ func reloadNginxConfig(channel spec.Channel, ctx context.Context) *spec.Response
 		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
 	}
 
-	if response := restoreConfigFile(channel, ctx, backup, activeFile); !response.Success  {
+	if response := restoreConfigFile(channel, ctx, backup, activeFile); !response.Success {
 		return response
 	}
 	if response := runNginxCommand(channel, ctx, "-s reload"); !response.Success {

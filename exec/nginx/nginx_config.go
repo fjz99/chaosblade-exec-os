@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -144,6 +145,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 		if newFile == "" || !util.IsExist(newFile) || util.IsDir(newFile) {
 			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file '%s' not exists", newFile))
 		}
+		newFile, _ = filepath.Abs(newFile)
 	case cmdMode:
 		if config == nil {
 			config, _ = parser.LoadConfig(activeFile)

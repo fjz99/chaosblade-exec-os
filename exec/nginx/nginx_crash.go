@@ -60,11 +60,6 @@ func (*NginxCrashExecutor) Name() string {
 }
 
 func (ng *NginxCrashExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {
-	commands := []string{"kill"}
-	if response, ok := ng.channel.IsAllCommandsAvailable(ctx, commands); !ok {
-		return response
-	}
-
 	if _, ok := spec.IsDestroy(ctx); ok {
 		return ng.stop(ctx)
 	}
