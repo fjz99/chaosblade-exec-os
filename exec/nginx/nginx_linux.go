@@ -3,10 +3,13 @@ package nginx
 import (
 	"context"
 	"fmt"
-	"github.com/chaosblade-io/chaosblade-spec-go/spec"
-	"github.com/chaosblade-io/chaosblade-spec-go/util"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/chaosblade-io/chaosblade-spec-go/spec"
+	"github.com/chaosblade-io/chaosblade-spec-go/util"
 )
 
 // nginx.conf may have 'include mime.types;' etc.
