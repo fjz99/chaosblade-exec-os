@@ -44,7 +44,7 @@ func testNginxExists(channel spec.Channel, ctx context.Context) *spec.Response {
 		if strings.Contains(processes, "nginx.exe") {
 			return nil
 		} else {
-			return spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
+			return spec.ReturnFail(spec.OsCmdExecFailed, "cannot find nginx process")
 		}
 	} else {
 		return response

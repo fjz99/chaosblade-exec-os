@@ -67,13 +67,13 @@ func getNginxPid(channel spec.Channel, ctx context.Context) ([]int, *spec.Respon
 	result := response.Result.(string)
 	count := strings.Count(result, "\n")
 	if count == 0 {
-		return []int{}, spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
+		return []int{}, spec.ReturnFail(spec.OsCmdExecFailed, "cannot find nginx process")
 	}
 	var allPid []int
 	for _, s := range strings.Split(strings.Trim(result, "\n"), "\n") {
 		pid, err := strconv.Atoi(s)
 		if err != nil {
-			return []int{}, spec.ReturnFail(spec.ProcessIdByNameFailed, "cannot find nginx process")
+			return []int{}, spec.ReturnFail(spec.OsCmdExecFailed, "cannot find nginx process")
 		}
 		allPid = append(allPid, pid)
 	}

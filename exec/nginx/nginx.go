@@ -91,7 +91,7 @@ func reloadNginxConfig(channel spec.Channel, ctx context.Context) *spec.Response
 	}
 
 	if !util.IsExist(backup) || util.IsDir(backup) {
-		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("backup file %s not exists", backup))
+		return spec.ReturnFail(spec.FileNotExist, fmt.Sprintf("backup file %s", backup))
 	}
 
 	if response := restoreConfigFile(channel, ctx, backup, activeFile); !response.Success {

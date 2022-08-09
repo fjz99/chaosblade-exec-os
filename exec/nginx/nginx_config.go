@@ -143,7 +143,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 	switch mode {
 	case fileMode:
 		if newFile == "" || !util.IsExist(newFile) || util.IsDir(newFile) {
-			return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("config file '%s' not exists", newFile))
+			return spec.ResponseFailWithFlags(spec.FileNotExist, fmt.Sprintf("config file '%s'", newFile))
 		}
 		newFile, _ = filepath.Abs(newFile)
 	case cmdMode:
@@ -156,7 +156,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 			return resp
 		}
 	default:
-		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
+		return spec.ResponseFailWithFlags(spec.ParameterInvalid, "--mode", mode, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
 	}
 
 	return swapNginxConfig(ng.channel, ctx, newFile, model)
@@ -165,14 +165,13 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 func createNewConfig(config *parser.Config, id string, newKV string) (string, *spec.Response) {
 	blocksList := config.GetBlocksList()
 	blockId, err := strconv.Atoi(id)
-	// fmt.Println("id=", id, err)
 	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
-		return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--block-id='%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
+		return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--block-id", id, fmt.Sprintf("--block-id='%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
 	}
 	for _, kv := range strings.Split(newKV, ";") {
 		arr := strings.Split(strings.TrimSpace(kv), "=")
 		if newKV == "" || len(arr) != 2 {
-			return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--set-config='%s' is not valid", newKV))
+			return "", spec.ResponseFailWithFlags(spec.OsCmdExecFailed, "--set-config", newKV, fmt.Sprintf("--set-config='%s' is not valid", newKV))
 		}
 		k := strings.TrimSpace(arr[0])
 		v := strings.TrimSpace(arr[1])
@@ -194,7 +193,7 @@ func createNewConfig(config *parser.Config, id string, newKV string) (string, *s
 func (ng *NginxConfigExecutor) stop(ctx context.Context, model *spec.ExpModel) *spec.Response {
 	mode := model.ActionFlags["mode"]
 	if mode != "" {
-		return spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--mode cannot be %s when destroying Nginx config experiment", mode))
+		return spec.ResponseFailWithFlags(spec.ParameterInvalid, "--mode", mode, fmt.Sprintf("--mode cannot be %s when destroying Nginx config experiment", mode))
 	}
 	return reloadNginxConfig(ng.channel, ctx)
 }

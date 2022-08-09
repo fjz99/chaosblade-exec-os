@@ -94,7 +94,7 @@ func TestKVChange(t *testing.T) {
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["list"] = "true"
 
-	model.ActionFlags["mode"] = "cmd"
+	model.ActionFlags["mode"] = "xxx"
 
 	// model.ActionFlags["set-config"] = "listen=9999"
 	// model.ActionFlags["block-id"] = "3"

@@ -193,7 +193,7 @@ func getContentType(contentTypeKey string) (string, *spec.Response) {
 	for k := range contentTypeMap {
 		support += k + ", "
 	}
-	return "", spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf("--type %s is not supported, only supports ( %s )", contentTypeKey, support))
+	return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--type", contentTypeKey, fmt.Sprintf("--type %s is not supported, only supports ( %s )", contentTypeKey, support))
 }
 
 func findServerBlock(config *parser.Config) (*parser.Block, *spec.Response) {
@@ -220,7 +220,7 @@ func createNewLocationBlock(path, code, body, header, contentType string) (*pars
 	block.Header = fmt.Sprintf("%s = %s", block.Type, path) //highest priority
 	pairs := parseMultipleKvPairs(header)
 	if pairs == nil && header != "" {
-		return nil, spec.ReturnFail(spec.ParameterInvalid, fmt.Sprintf("--header=%s is not valid", header))
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--header", header, fmt.Sprintf("--header=%s is not valid", header))
 	}
 	hasContentType := false
 	for _, pair := range pairs {
@@ -237,7 +237,7 @@ func createNewLocationBlock(path, code, body, header, contentType string) (*pars
 	}
 
 	if _, err := strconv.Atoi(code); err != nil {
-		return nil, spec.ReturnFail(spec.ParameterInvalid, fmt.Sprintf("--code=%s is not valid, %s", code, err))
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--code", code, fmt.Sprintf("--code=%s is not valid, %s", code, err))
 	}
 	block.Statements = parser.SetStatement(block.Statements, "return", fmt.Sprintf("%s '%s'", code, body), true)
 	return block, nil
