@@ -49,3 +49,5 @@ vendor
 
 # Website
 site-build
+
+.vscode
