@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -49,6 +50,8 @@ func killNginx(channel spec.Channel, ctx context.Context) *spec.Response {
 	if response != nil {
 		return response
 	}
+	//kill master process first
+	sort.Ints(allPid)
 	// fmt.Println(allPid)
 	for _, pid := range allPid {
 		response = channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
