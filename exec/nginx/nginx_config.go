@@ -68,8 +68,8 @@ blade create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=www.b
 
 //!!!!!!
 //!!!
-# Revert config change, uid = xxx
-blade destroy nginx config --uid
+# Revert config change, suid = xxx
+blade destroy nginx config --suid
 
 # Revert config change to the oldest config file
 blade destroy nginx config --force

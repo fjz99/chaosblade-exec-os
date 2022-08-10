@@ -112,15 +112,10 @@ func swapNginxConfig(channel spec.Channel, ctx context.Context, newFile string, 
 		return response
 	}
 
-	if model.ActionFlags["mode"] == cmdMode {
-		// remove auto generated config
-		if response := backupConfigFile(channel, ctx, backup, activeFile, newFile, true); !response.Success {
-			return response
-		}
-	} else {
-		if response := backupConfigFile(channel, ctx, backup, activeFile, newFile, false); !response.Success {
-			return response
-		}
+	// remove auto generated config
+	response = backupConfigFile(channel, ctx, backup, activeFile, newFile, model.ActionFlags["mode"] != fileMode)
+	if !response.Success {
+		return response
 	}
 
 	if response := runNginxCommand(channel, ctx, "-s reload"); !response.Success {

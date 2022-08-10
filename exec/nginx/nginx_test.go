@@ -1,6 +1,3 @@
-//go:build !windows
-// +build !windows
-
 package nginx
 
 import (
@@ -12,6 +9,8 @@ import (
 	"strings"
 	"testing"
 )
+
+const suid = "12345"
 
 func TestPid(t *testing.T) {
 	localChannel := channel.LocalChannel{}
@@ -44,11 +43,15 @@ func TestRegex(t *testing.T) {
 func TestCrash(t *testing.T) {
 	executor := NginxCrashExecutor{channel: channel.NewLocalChannel()}
 	model := spec.ExpModel{}
-	// response := executor.Exec("", context.Background(), &model)
-	// fmt.Println(*response)
+	response := executor.Exec(suid, context.Background(), &model)
+	fmt.Println(*response)
+}
 
-	//cancel
-	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+func TestStart(t *testing.T) {
+	executor := NginxCrashExecutor{channel: channel.NewLocalChannel()}
+	model := spec.ExpModel{}
+	
+	response := executor.Exec(suid, context.WithValue(context.Background(), "suid", suid), &model)
 	fmt.Println(*response)
 }
 
@@ -88,7 +91,7 @@ func TestConfigChangeRevert(t *testing.T) {
 	model.ActionFlags = make(map[string]string)
 
 	//cancel
-	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	response := executor.Exec(suid, context.WithValue(context.Background(), "suid", suid), &model)
 	fmt.Println(*response)
 }
 
@@ -101,7 +104,7 @@ func TestListBlock(t *testing.T) {
 	model.ActionFlags["list"] = "true"
 
 	//cancel
-	response := executor.Exec("dsadsad2", context.Background(), &model)
+	response := executor.Exec(suid, context.Background(), &model)
 	fmt.Println(*response)
 }
 
@@ -121,7 +124,7 @@ func TestKVChange(t *testing.T) {
 	model.ActionFlags["set-config"] = "proxy_pass=https://www.taobao.com"
 	model.ActionFlags["block-id"] = "4"
 
-	response := executor.Exec("dsadsad2", context.Background(), &model)
+	response := executor.Exec(suid, context.Background(), &model)
 	fmt.Println(response)
 }
 
@@ -133,7 +136,7 @@ func TestCancelKVChange(t *testing.T) {
 	model.ActionFlags = make(map[string]string)
 	// model.ActionFlags["mode"] = "file"
 
-	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	response := executor.Exec(suid, context.WithValue(context.Background(), "suid", suid), &model)
 	fmt.Println(response)
 }
 
@@ -144,13 +147,13 @@ func TestChangeResponse(t *testing.T) {
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	model.ActionFlags["type"] = "json"
-	model.ActionFlags["path"] = "/test"
+	model.ActionFlags["path"] = "/"
 	model.ActionFlags["code"] = "200"
 	model.ActionFlags["header"] = ""
 	model.ActionFlags["body"] = `{"a":1}`
 	// model.ActionFlags["body"] = "hello!"
 
-	response := executor.Exec("dsadsad2", context.Background(), &model)
+	response := executor.Exec(suid, context.Background(), &model)
 	fmt.Println(response)
 }
 
@@ -161,7 +164,7 @@ func TestCancelResponseChange(t *testing.T) {
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 
-	response := executor.Exec("dsadsad2", context.WithValue(context.Background(), "suid", "dasdsa"), &model)
+	response := executor.Exec(suid, context.WithValue(context.Background(), "suid", suid), &model)
 	fmt.Println(response)
 }
 

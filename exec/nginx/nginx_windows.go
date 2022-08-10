@@ -6,20 +6,10 @@ import (
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 	"github.com/chaosblade-io/chaosblade-spec-go/util"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 )
-
-func startDaemon(ctx context.Context, script, args string) *spec.Response {
-	cmd := exec.CommandContext(ctx, "cmd", "/C", script+` `+args)
-	if err := cmd.Start(); err != nil {
-		return spec.ResponseFailWithFlags(spec.OsCmdExecFailed, cmd, err)
-	} else {
-		return spec.Success()
-	}
-}
 
 // nginx.conf may have 'include mime.types;' etc.
 func testNginxConfig(channel spec.Channel, ctx context.Context, file, dir string) *spec.Response {
@@ -61,18 +51,27 @@ func killNginx(channel spec.Channel, ctx context.Context) *spec.Response {
 }
 
 func runNginxCommand(channel spec.Channel, ctx context.Context, args string) *spec.Response {
-	//find nginx location, NGINX_HOME or PATH
+	//find nginx location: NGINX_HOME
 	dir := os.Getenv("NGINX_HOME")
 	if dir == "" {
-		//loc := os.Getenv("PATH")
-		//TODO PATH
 		return spec.ReturnFail(spec.OsCmdExecFailed, "cannot find nginx location, check your PATH and NGINX_HOME")
 	}
 	if args == "" {
 		//start nginx daemon
-		return startDaemon(ctx, fmt.Sprintf("cd /d %s && nginx", dir), "")
+		c := make(chan *spec.Response)
+		go func() {
+			c <- channel.Run(ctx, fmt.Sprintf("cd /d %s && start /b nginx", dir), "")
+		}()
+
+		select {
+		case response := <-c:
+			return response
+		case <-time.After(time.Duration(1) * time.Second):
+			return spec.Success()
+		}
+	} else {
+		return channel.Run(ctx, fmt.Sprintf("cd /d %s && nginx %s", dir, args), "")
 	}
-	return channel.Run(ctx, fmt.Sprintf("cd /d %s && nginx %s", dir, args), "")
 }
 
 func restoreConfigFile(channel spec.Channel, ctx context.Context, backup, activeFile string) *spec.Response {
