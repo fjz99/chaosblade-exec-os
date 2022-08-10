@@ -17,13 +17,7 @@
 package model
 
 import (
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/cpu"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/disk"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/file"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/mem"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/network"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/process"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/script"
+	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 )
 
@@ -31,13 +25,6 @@ import (
 // Support for other project about chaosblade
 func GetAllExpModels() []spec.ExpModelCommandSpec {
 	return []spec.ExpModelCommandSpec{
-		cpu.NewCpuCommandModelSpec(),
-		mem.NewMemCommandModelSpec(),
-		process.NewProcessCommandModelSpec(),
-		network.NewNetworkCommandSpec(),
-		disk.NewDiskCommandSpec(),
-		script.NewScriptCommandModelSpec(),
-		file.NewFileCommandSpec(),
 		nginx.NewNginxCommandSpec(),
 	}
 }

@@ -54,7 +54,7 @@ func runNginxCommand(channel spec.Channel, ctx context.Context, args string) *sp
 	//find nginx location: NGINX_HOME
 	dir := os.Getenv("NGINX_HOME")
 	if dir == "" {
-		return spec.ReturnFail(spec.OsCmdExecFailed, "cannot find nginx location, check your PATH and NGINX_HOME")
+		return spec.ReturnFail(spec.OsCmdExecFailed, "cannot find nginx location, check your NGINX_HOME")
 	}
 	if args == "" {
 		//start nginx daemon
