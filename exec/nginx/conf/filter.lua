@@ -1,5 +1,8 @@
 local uri = ngx.var.uri;
-if uri == "/tt" or string.match(uri, "/test.*")
+local path = "%s"
+local regex = "%s"
+
+if (path ~= "" and uri == path) or (regex ~= "" and string.match(uri, regex))
 then
     ngx.header["a"] = "b"
     ngx.header["Content-Type"] = "text/plain"

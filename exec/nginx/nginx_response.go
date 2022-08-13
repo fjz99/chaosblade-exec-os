@@ -17,12 +17,16 @@ const (
 	contentTypeHeaderNameUpper = "Content-Type"
 	contentTypeHeaderNameLower = "content-type"
 	luaCode                    = `local uri = ngx.var.uri;
-if uri == "%s" or string.match(uri, "%s")
+local path = "%s"
+local regex = "%s"
+
+if (path ~= "" and uri == path) or (regex ~= "" and string.match(uri, regex))
 then
-    %s
-    ngx.say(%s)
-    ngx.exit(%s)
-end`
+%s
+ngx.say('%s')
+ngx.exit(%s)
+end
+`
 )
 
 var contentTypeMap = map[string]string{
@@ -177,8 +181,8 @@ func setResponse(model *spec.ExpModel, activeFile, contentType string, useLua bo
 	body := model.ActionFlags["body"]
 	header := model.ActionFlags["header"]
 	serverId := model.ActionFlags["server"]
-	if regex == "" && path == "" {
-		return "", spec.ReturnFail(spec.ParameterIllegal, "--path and --regex cannot be empty at the same time")
+	if (regex == "" && path == "") || (regex != "" && path != "") {
+		return "", spec.ReturnFail(spec.ParameterIllegal, "--path and --regex")
 	}
 
 	config, err := parser.LoadConfig(activeFile)
@@ -232,7 +236,6 @@ func getContentType(contentTypeKey string) (string, *spec.Response) {
 	return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--type", contentTypeKey, fmt.Sprintf("--type %s is not supported, only supports ( %s )", contentTypeKey, support))
 }
 
-//TODO index
 func findServerBlock(config *parser.Config, id string) (*parser.Block, *spec.Response) {
 	serverId, err := strconv.Atoi(id)
 	if err != nil {
@@ -271,7 +274,6 @@ func createNewBlock(path, regex, code, body, header, contentType string, useLua 
 	if pairs == nil && header != "" {
 		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--header", header, fmt.Sprintf("--header=%s is not valid", header))
 	}
-	block.Statements = parser.SetStatement(block.Statements, "default_type", fmt.Sprintf("'%s'", contentType), true)
 	if _, err := strconv.Atoi(code); err != nil {
 		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--code", code, fmt.Sprintf("--code=%s is not valid, %s", code, err))
 	}
@@ -280,13 +282,22 @@ func createNewBlock(path, regex, code, body, header, contentType string, useLua 
 		block.Type = parser.Lua
 		block.Header = "rewrite_by_lua_block"
 		headerString := ""
+		hasContentType := false
 		for _, pair := range pairs {
 			headerString += fmt.Sprintf(`ngx.header["%s"] = "%s"\n`, pair[0], pair[1])
+			if pair[0] == contentTypeHeaderNameLower ||
+				pair[0] == contentTypeHeaderNameUpper {
+				hasContentType = true
+			}
+		}
+		if !hasContentType {
+			headerString += fmt.Sprintf(`ngx.header["Content-Type"] = "%s"`, contentType)
 		}
 		block.Statements = parser.SetStatement(block.Statements, fmt.Sprintf(luaCode, path, regex, headerString, body, code), "", true)
 	} else {
 		block.Type = parser.Location
 		block.Header = fmt.Sprintf("%s = %s", block.Type, path) //highest priority
+		block.Statements = parser.SetStatement(block.Statements, "default_type", fmt.Sprintf("'%s'", contentType), true)
 		for _, pair := range pairs {
 			block.Statements = parser.SetStatement(block.Statements, "add_header",
 				fmt.Sprintf("%s: %s", pair[0], pair[1]), true)
