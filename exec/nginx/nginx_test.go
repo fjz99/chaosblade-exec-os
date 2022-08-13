@@ -50,7 +50,7 @@ func TestCrash(t *testing.T) {
 func TestStart(t *testing.T) {
 	executor := NginxCrashExecutor{channel: channel.NewLocalChannel()}
 	model := spec.ExpModel{}
-	
+
 	response := executor.Exec(suid, context.WithValue(context.Background(), "suid", suid), &model)
 	fmt.Println(*response)
 }
@@ -151,6 +151,7 @@ func TestChangeResponse(t *testing.T) {
 	model.ActionFlags["code"] = "200"
 	model.ActionFlags["header"] = ""
 	model.ActionFlags["body"] = `{"a":1}`
+	model.ActionFlags["server"] = `0`
 	// model.ActionFlags["body"] = "hello!"
 
 	response := executor.Exec(suid, context.Background(), &model)
@@ -169,7 +170,7 @@ func TestCancelResponseChange(t *testing.T) {
 }
 
 func TestTmp(t *testing.T) {
-	var a []int;
+	var a []int
 	a = append(a, 1)
 	a = append(a, 2)
 	fmt.Println(a[2:])

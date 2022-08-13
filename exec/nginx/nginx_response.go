@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
@@ -15,6 +16,13 @@ const (
 	defaultContentType         = "text/plain;charset=utf-8"
 	contentTypeHeaderNameUpper = "Content-Type"
 	contentTypeHeaderNameLower = "content-type"
+	luaCode                    = `local uri = ngx.var.uri;
+if uri == "%s" or string.match(uri, "%s")
+then
+    %s
+    ngx.say(%s)
+    ngx.exit(%s)
+end`
 )
 
 var contentTypeMap = map[string]string{
@@ -27,18 +35,12 @@ type ResponseActionSpec struct {
 	spec.BaseExpActionCommandSpec
 }
 
-//TODO regex支持
 //TODO 支持匹配冲突问题，即多个匹配都满足的情况
-//TODO 支持路由类型的响应替换？
-//TODO 支持html文件类型，解决方案是自己启动一个web server
 //TODO version chain
 
 //TODO 检验保证响应替换
-//TODO macOS
-//TODO Windows
 //TODO 单测
 //TODO 全部仓库
-//TODO 暂时不指定id，默认是第一个server内增加location
 
 func NewResponseActionSpec() spec.ExpActionCommandSpec {
 	return &ResponseActionSpec{
@@ -48,30 +50,33 @@ func NewResponseActionSpec() spec.ExpActionCommandSpec {
 					Name: "body",
 					Desc: "change response body",
 				},
-				// &spec.ExpFlag{
-				// 	Name: "body-file",
-				// 	Desc: "change response body",
-				// },
 				&spec.ExpFlag{
 					//为了使body有效，会自动设置content type
 					Name: "header",
 					Desc: "change response header",
 				},
 				&spec.ExpFlag{
-					//为了使body有效，会自动设置content type
 					Name:    "code",
 					Desc:    "change response code, default 200",
 					Default: "200",
 				},
 				&spec.ExpFlag{
-					Name:     "path",
-					Desc:     "change response path",
-					Required: true,
+					Name: "path",
+					Desc: "change response path",
+				},
+				&spec.ExpFlag{
+					Name: "regex",
+					Desc: "change response path",
 				},
 				&spec.ExpFlag{
 					Name:    "type",
 					Desc:    "new response body type",
 					Default: "json",
+				},
+				&spec.ExpFlag{
+					Name:    "server",
+					Desc:    "which server you want to modify response? default server id is 0",
+					Default: "0",
 				},
 			},
 			ActionFlags:    []spec.ExpFlagSpec{},
@@ -138,24 +143,56 @@ func (ng *NginxResponseExecutor) Exec(suid string, ctx context.Context, model *s
 	return ng.start(ctx, activeFile, model)
 }
 
+//18.	nginx: [emerg] unknown directive "content_by_lua_block" in D:\nginx-1.9.9/conf/nginx.conf:43
+//nginx: configuration file D:\nginx-1.9.9/conf/nginx.conf test failed
 func (ng *NginxResponseExecutor) start(ctx context.Context, activeFile string, model *spec.ExpModel) *spec.Response {
 	contentType, response := getContentType(model.ActionFlags["type"])
 	if response != nil {
 		return response
 	}
-	config, _ := parser.LoadConfig(activeFile)
-	path := model.ActionFlags["path"]
-	code := model.ActionFlags["code"]
-	body := model.ActionFlags["body"]
-	header := model.ActionFlags["header"]
-
-	server, response := findServerBlock(config)
+	newFile, response := setResponse(model, activeFile, contentType, true)
 	if response != nil {
 		return response
 	}
-	newBlock, response := createNewLocationBlock(path, code, body, header, contentType)
+
+	response = swapNginxConfig(ng.channel, ctx, newFile, model)
+	if !response.Success {
+		errMsg := response.Err
+		if strings.Contains(errMsg, `unknown directive "rewrite_by_lua_block"`) {
+			//don't support lua
+			newFile, response := setResponse(model, activeFile, contentType, false)
+			if response != nil {
+				return response
+			}
+			return swapNginxConfig(ng.channel, ctx, newFile, model)
+		}
+	}
+	return response
+}
+
+func setResponse(model *spec.ExpModel, activeFile, contentType string, useLua bool) (string, *spec.Response) {
+	path := model.ActionFlags["path"]
+	regex := model.ActionFlags["regex"]
+	code := model.ActionFlags["code"]
+	body := model.ActionFlags["body"]
+	header := model.ActionFlags["header"]
+	serverId := model.ActionFlags["server"]
+	if regex == "" && path == "" {
+		return "", spec.ReturnFail(spec.ParameterIllegal, "--path and --regex cannot be empty at the same time")
+	}
+
+	config, err := parser.LoadConfig(activeFile)
+	if err != nil {
+		return "", spec.ReturnFail(spec.ParameterIllegal, fmt.Sprintf("nginx.conf parsing err %s", err))
+	}
+	server, response := findServerBlock(config, serverId)
 	if response != nil {
-		return response
+		return "", response
+	}
+
+	newBlock, response := createNewBlock(path, regex, code, body, header, contentType, useLua)
+	if response != nil {
+		return "", response
 	}
 	newBlockList := []parser.Block{*newBlock}
 	for _, b := range server.Blocks {
@@ -166,12 +203,11 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, activeFile string, m
 	server.Blocks = newBlockList
 
 	name := "nginx.chaosblade.tmp.conf"
-	err := config.EasyDumpToFile(name)
+	err = config.EasyDumpToFile(name)
 	if err != nil {
-		return spec.ReturnFail(spec.OsCmdExecFailed, err.Error())
+		return "", spec.ReturnFail(spec.OsCmdExecFailed, err.Error())
 	}
-
-	return swapNginxConfig(ng.channel, ctx, name, model)
+	return name, nil
 }
 
 func (ng *NginxResponseExecutor) stop(ctx context.Context) *spec.Response {
@@ -196,7 +232,13 @@ func getContentType(contentTypeKey string) (string, *spec.Response) {
 	return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--type", contentTypeKey, fmt.Sprintf("--type %s is not supported, only supports ( %s )", contentTypeKey, support))
 }
 
-func findServerBlock(config *parser.Config) (*parser.Block, *spec.Response) {
+//TODO index
+func findServerBlock(config *parser.Config, id string) (*parser.Block, *spec.Response) {
+	serverId, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--server", id, fmt.Sprintf("--server=%s is not valid, %s", id, err))
+	}
+
 	var http *parser.Block = nil
 	for i := 0; i < len(config.Blocks); i++ {
 		b := &config.Blocks[i]
@@ -205,40 +247,52 @@ func findServerBlock(config *parser.Config) (*parser.Block, *spec.Response) {
 			break
 		}
 	}
+
+	index := 0
 	for i := 0; i < len(http.Blocks); i++ {
 		b := &http.Blocks[i]
 		if b.Type == parser.Server {
-			return b, nil
+			if index == serverId {
+				return b, nil
+			}
+			index += 1
 		}
 	}
-	return nil, spec.ReturnFail(spec.OsCmdExecFailed, "Server config not found in nginx.conf")
+	if index == 0 {
+		return nil, spec.ReturnFail(spec.OsCmdExecFailed, `There is no Server config in nginx.conf`)
+	} else {
+		return nil, spec.ReturnFail(spec.OsCmdExecFailed, fmt.Sprintf(`Server config not found in nginx.conf, valid serverId : 0 - %d`, index-1))
+	}
 }
 
-func createNewLocationBlock(path, code, body, header, contentType string) (*parser.Block, *spec.Response) {
+func createNewBlock(path, regex, code, body, header, contentType string, useLua bool) (*parser.Block, *spec.Response) {
 	block := parser.NewBlock()
-	block.Type = parser.Location
-	block.Header = fmt.Sprintf("%s = %s", block.Type, path) //highest priority
 	pairs := parseMultipleKvPairs(header)
 	if pairs == nil && header != "" {
 		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--header", header, fmt.Sprintf("--header=%s is not valid", header))
 	}
-	hasContentType := false
-	for _, pair := range pairs {
-		block.Statements = parser.SetStatement(block.Statements, "add_header",
-			fmt.Sprintf("%s: %s", pair[0], pair[1]), true)
-		if pair[0] == contentTypeHeaderNameLower ||
-			pair[0] == contentTypeHeaderNameUpper {
-			hasContentType = true
-		}
-	}
-	if !hasContentType {
-		block.Statements = parser.SetStatement(block.Statements, "add_header",
-			fmt.Sprintf("Content-Type '%s'", contentType), true)
-	}
-
+	block.Statements = parser.SetStatement(block.Statements, "default_type", fmt.Sprintf("'%s'", contentType), true)
 	if _, err := strconv.Atoi(code); err != nil {
 		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--code", code, fmt.Sprintf("--code=%s is not valid, %s", code, err))
 	}
-	block.Statements = parser.SetStatement(block.Statements, "return", fmt.Sprintf("%s '%s'", code, body), true)
+
+	if useLua {
+		block.Type = parser.Lua
+		block.Header = "rewrite_by_lua_block"
+		headerString := ""
+		for _, pair := range pairs {
+			headerString += fmt.Sprintf(`ngx.header["%s"] = "%s"\n`, pair[0], pair[1])
+		}
+		block.Statements = parser.SetStatement(block.Statements, fmt.Sprintf(luaCode, path, regex, headerString, body, code), "", true)
+	} else {
+		block.Type = parser.Location
+		block.Header = fmt.Sprintf("%s = %s", block.Type, path) //highest priority
+		for _, pair := range pairs {
+			block.Statements = parser.SetStatement(block.Statements, "add_header",
+				fmt.Sprintf("%s: %s", pair[0], pair[1]), true)
+		}
+		block.Statements = parser.SetStatement(block.Statements, "return", fmt.Sprintf("%s '%s'", code, body), true)
+	}
+
 	return block, nil
 }

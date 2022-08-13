@@ -52,10 +52,8 @@ func killNginx(channel spec.Channel, ctx context.Context) *spec.Response {
 	}
 	//kill master process first
 	sort.Ints(allPid)
-	// fmt.Println(allPid)
 	for _, pid := range allPid {
 		response = channel.Run(ctx, fmt.Sprintf("kill -9 %d", pid), "")
-		// fmt.Println(response)
 		if !response.Success {
 			return response
 		}

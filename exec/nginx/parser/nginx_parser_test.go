@@ -11,7 +11,7 @@ func Test1(t *testing.T) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	input := antlr.NewInputStream(`        rewrite_by_lua_block {
+	input := antlr.NewInputStream(`rewrite_by_lua_block {
 		local uri=ngx.var.uri;
 		if uri == "/tt"
 		then
@@ -24,7 +24,7 @@ func Test1(t *testing.T) {
 	p := NewNginxParser(stream)
 	//p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
 	p.BuildParseTrees = true
-	tree := p.Block()
+	tree := p.Config()
 	fmt.Println(tree.ToStringTree(nil, p))
 	//visitor := newMappingVisitor()
 	//config := tree.Accept(visitor).(*Config)
