@@ -169,5 +169,8 @@ func TestCancelResponseChange(t *testing.T) {
 }
 
 func TestTmp(t *testing.T) {
-
+	var a []int;
+	a = append(a, 1)
+	a = append(a, 2)
+	fmt.Println(a[2:])
 }

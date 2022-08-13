@@ -91,7 +91,7 @@ func (v *mappingVisitor) VisitGenericStatement(ctx *GenericStatementContext) int
 	s := NewStatement()
 	children := ctx.GetChildren()
 	s.Key = children[0].GetPayload().(antlr.Token).GetText()
-	s.Value = concatChildrenString(children[1:], " ")
+	s.Value = concatChildrenString(children[1:], " ") // value = "" when lua statement 
 	return *s
 }
 
