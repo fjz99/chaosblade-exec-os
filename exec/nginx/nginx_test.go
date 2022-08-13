@@ -150,7 +150,7 @@ func TestChangeResponse(t *testing.T) {
 	// model.ActionFlags["path"] = "/test"
 	model.ActionFlags["regex"] = "/t.*"
 	model.ActionFlags["code"] = "200"
-	model.ActionFlags["header"] = ""
+	model.ActionFlags["header"] = "dsadas=dsadsa;"
 	model.ActionFlags["body"] = `{"a":1}`
 	model.ActionFlags["server"] = `0`
 	// model.ActionFlags["body"] = "hello!"
@@ -171,8 +171,5 @@ func TestCancelResponseChange(t *testing.T) {
 }
 
 func TestTmp(t *testing.T) {
-	var a []int
-	a = append(a, 1)
-	a = append(a, 2)
-	fmt.Println(a[2:])
+	
 }

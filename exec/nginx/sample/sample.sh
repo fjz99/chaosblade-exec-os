@@ -45,3 +45,7 @@ curl -v "${HOST}/test"
 ./chaos_os create nginx response --path / --code 200 --body '{"a":1}'
 curl -v "${HOST}/test"
 ./chaos_os destroy nginx response
+
+./chaos_os create nginx response --regex /t.* --code 200 --body '{"a":1}' --header 'Server=mock;' --server 0
+curl -v "${HOST}/test"
+./chaos_os destroy nginx response

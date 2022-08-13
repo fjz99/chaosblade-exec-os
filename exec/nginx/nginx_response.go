@@ -284,14 +284,14 @@ func createNewBlock(path, regex, code, body, header, contentType string, useLua 
 		headerString := ""
 		hasContentType := false
 		for _, pair := range pairs {
-			headerString += fmt.Sprintf(`ngx.header["%s"] = "%s"\n`, pair[0], pair[1])
+			headerString += fmt.Sprintf("ngx.header[\"%s\"] = \"%s\"\n", pair[0], pair[1])
 			if pair[0] == contentTypeHeaderNameLower ||
 				pair[0] == contentTypeHeaderNameUpper {
 				hasContentType = true
 			}
 		}
 		if !hasContentType {
-			headerString += fmt.Sprintf(`ngx.header["Content-Type"] = "%s"`, contentType)
+			headerString += fmt.Sprintf("ngx.header[\"Content-Type\"] = \"%s\"\n", contentType)
 		}
 		block.Statements = parser.SetStatement(block.Statements, fmt.Sprintf(luaCode, path, regex, headerString, body, code), "", true)
 	} else {
