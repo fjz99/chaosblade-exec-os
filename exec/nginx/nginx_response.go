@@ -95,6 +95,9 @@ blade create nginx response --path /test --code 500
 # Set /test returns body='',code=500,type=json
 blade create nginx response --path /test --code 200 --body '{"a":1}' --type json
 
+# Set /t.* returns body='{"a":1}',code=200,type=json,add header 'Server=mock'
+blade create nginx response --regex /t.* --code 200 --body '{"a":1}' --header 'Server=mock;' --server 0
+
 # Revert config change to the oldest config file
 blade destroy nginx response
 			`,
@@ -163,7 +166,7 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, activeFile string, m
 	if !response.Success {
 		errMsg := response.Err
 		if strings.Contains(errMsg, `unknown directive "rewrite_by_lua_block"`) {
-			//don't support lua
+			//don't support lua, fallback
 			newFile, response := setResponse(model, activeFile, contentType, false)
 			if response != nil {
 				return response
@@ -295,6 +298,9 @@ func createNewBlock(path, regex, code, body, header, contentType string, useLua 
 		}
 		block.Statements = parser.SetStatement(block.Statements, fmt.Sprintf(luaCode, path, regex, headerString, body, code), "", true)
 	} else {
+		if regex != "" {
+			return nil, spec.ReturnFail(spec.OsCmdExecFailed, "Your nginx don't have lua support, so cannot change response by --regex")
+		}
 		block.Type = parser.Location
 		block.Header = fmt.Sprintf("%s = %s", block.Type, path) //highest priority
 		block.Statements = parser.SetStatement(block.Statements, "default_type", fmt.Sprintf("'%s'", contentType), true)
