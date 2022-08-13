@@ -2,6 +2,7 @@
 
 HOST=http://101.201.210.248/
 
+curl --head $HOST
 #1
 ./chaos_os create nginx crash
 ./chaos_os destroy nginx crash
@@ -33,14 +34,14 @@ HOST=http://101.201.210.248/
 ./chaos_os destroy nginx config
 
 #4
-./chaos_os create nginx response --path /test --body 'ok'
+./chaos_os create nginx response --path / --body 'ok'
 curl -v "${HOST}/test"
 ./chaos_os destroy nginx response
 
-./chaos_os create nginx response --path /test --code 500
+./chaos_os create nginx response --path / --code 500
 curl -v "${HOST}/test"
 ./chaos_os destroy nginx response
 
-./chaos_os create nginx response --path /test --code 200 --body '{"a":1}'
+./chaos_os create nginx response --path / --code 200 --body '{"a":1}'
 curl -v "${HOST}/test"
 ./chaos_os destroy nginx response
