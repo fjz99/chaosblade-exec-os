@@ -1,5 +1,3 @@
-// Package parser
-// mapping nginx.conf to struct; mapping struct to nginx.conf
 package parser
 
 import (
@@ -12,7 +10,7 @@ import (
 //java org.antlr.v4.Tool -Dlanguage=Go -visitor -no-listener .\Nginx.g4
 const (
 	Server   = "server"
-	Http     = "http"
+	HTTP     = "http"
 	Upstream = "upstream"
 	Events   = "events"
 	Location = "location"
@@ -314,7 +312,7 @@ func (c *Config) printBlocks(block *Block, level, indent, startId int, print boo
 	for i := 0; i < len(block.Blocks); i++ {
 		startId = c.printBlocks(&block.Blocks[i], level+1, 4, startId, print)
 	}
-	if print && block.Type != Location && block.Type != Http {
+	if print && block.Type != Location && block.Type != HTTP {
 		fmt.Println("│")
 	}
 

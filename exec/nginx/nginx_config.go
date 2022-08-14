@@ -109,13 +109,6 @@ func (*NginxConfigExecutor) Name() string {
 }
 
 func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spec.ExpModel) *spec.Response {
-	// for k, v := range model.ActionFlags {
-	// fmt.Println(k, v)
-	// }
-	// if true {
-	// 	result := parser.ListResult{Block: &parser.Block{Header: "ffff"}, Header: "server", Type: "server", Id: 1}
-	// 	return spec.ReturnResultIgnoreCode(result)
-	// } // nginx process
 	if response := testNginxExists(ng.channel, ctx); response != nil {
 		return response
 	}

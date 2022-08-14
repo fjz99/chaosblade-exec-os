@@ -248,7 +248,7 @@ func findServerBlock(config *parser.Config, id string) (*parser.Block, *spec.Res
 	var http *parser.Block = nil
 	for i := 0; i < len(config.Blocks); i++ {
 		b := &config.Blocks[i]
-		if b.Type == parser.Http {
+		if b.Type == parser.HTTP {
 			http = b
 			break
 		}
@@ -261,7 +261,7 @@ func findServerBlock(config *parser.Config, id string) (*parser.Block, *spec.Res
 			if index == serverId {
 				return b, nil
 			}
-			index += 1
+			index++
 		}
 	}
 	if index == 0 {
