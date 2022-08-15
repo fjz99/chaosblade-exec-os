@@ -147,12 +147,12 @@ func TestChangeResponse(t *testing.T) {
 	model := spec.ExpModel{}
 	model.ActionFlags = make(map[string]string)
 	model.ActionFlags["type"] = "json"
-	model.ActionFlags["path"] = "/test"
+	model.ActionFlags["path"] = "/"
 	//model.ActionFlags["regex"] = "/t.*"
-	model.ActionFlags["code"] = "200"
+	model.ActionFlags["code"] = "500"
 	model.ActionFlags["header"] = "Server=mock;"
 	model.ActionFlags["body"] = `{"a":1}`
-	model.ActionFlags["server"] = `0`
+	// model.ActionFlags["server"] = `0`
 	// model.ActionFlags["body"] = "hello!"
 
 	response := executor.Exec(suid, context.Background(), &model)

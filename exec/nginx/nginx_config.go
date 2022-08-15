@@ -149,7 +149,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 			return resp
 		}
 	default:
-		return spec.ResponseFailWithFlags(spec.ParameterInvalid, "--mode", mode, fmt.Sprintf("invalid --mode argument, which must be '%s' or '%s'", fileMode, cmdMode))
+		return spec.ResponseFailWithFlags(spec.ParameterInvalid, "--mode", mode, fmt.Sprintf("--mode must be '%s' or '%s'", fileMode, cmdMode))
 	}
 
 	return swapNginxConfig(ng.channel, ctx, newFile, model)

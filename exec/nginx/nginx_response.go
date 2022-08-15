@@ -232,9 +232,12 @@ func getContentType(contentTypeKey string) (string, *spec.Response) {
 }
 
 func findServerBlock(config *parser.Config, id string) (*parser.Block, *spec.Response) {
+	if id == "" {
+		id = "0"
+	}
 	serverId, err := strconv.Atoi(id)
 	if err != nil {
-		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--server", id, fmt.Sprintf("--server=%s is not valid, %s", id, err))
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--server", id, fmt.Sprintf("--server='%s' is not valid, %s", id, err))
 	}
 
 	var http *parser.Block = nil
