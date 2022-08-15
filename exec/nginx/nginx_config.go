@@ -141,7 +141,7 @@ func createNewConfig(config *parser.Config, locator string, newKV string) (strin
 		return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--set-config", newKV)
 	}
 	for _, pair := range pairs {
-		err := config.SetStatement(locator, pair[0], pair[1], true)
+		err := config.SetStatement(locator, pair[0], pair[1], false)
 		if err != nil {
 			return "", spec.ResponseFailWithFlags(spec.OsCmdExecFailed, err.Error())
 		}
