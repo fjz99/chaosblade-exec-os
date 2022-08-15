@@ -95,19 +95,6 @@ func TestConfigChangeRevert(t *testing.T) {
 	fmt.Println(*response)
 }
 
-func TestListBlock(t *testing.T) {
-	s := NewConfigActionSpec()
-	executor := s.Executor()
-	executor.SetChannel(channel.NewLocalChannel())
-	model := spec.ExpModel{}
-	model.ActionFlags = make(map[string]string)
-	model.ActionFlags["list"] = "true"
-
-	//cancel
-	response := executor.Exec(suid, context.Background(), &model)
-	fmt.Println(*response)
-}
-
 func TestKVChange(t *testing.T) {
 	s := NewConfigActionSpec()
 	executor := s.Executor()
@@ -118,11 +105,11 @@ func TestKVChange(t *testing.T) {
 
 	model.ActionFlags["mode"] = "cmd"
 
-	// model.ActionFlags["set-config"] = "listen=9999"
-	// model.ActionFlags["block-id"] = "3"
+	model.ActionFlags["set-config"] = "listen=9999"
+	model.ActionFlags["block"] = "http.server[0]"
 
-	model.ActionFlags["set-config"] = "proxy_pass=https://www.taobao.com"
-	model.ActionFlags["block-id"] = "4"
+	// model.ActionFlags["set-config"] = "proxy_pass=https://www.taobao.com"
+	// model.ActionFlags["block"] = "http.server[0].location[0]"
 
 	response := executor.Exec(suid, context.Background(), &model)
 	fmt.Println(response)

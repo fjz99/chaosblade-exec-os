@@ -289,15 +289,14 @@ func (c *Config) GetBlocksList() []ListResult {
 }
 
 // FindBlock e.g., http.server[0].location[0]
-func (c *Config) FindBlock(locator string) ([]Statement, error) {
+func (c *Config) FindBlock(locator string) (*[]Statement, error) {
 	var now *Block = nil
-	var statements []Statement = nil
 	for idx, loc := range strings.Split(locator, ".") {
 		if loc == "global" {
 			if idx != 0 {
 				return nil, errors.New("block locator syntax err near 'global'")
 			}
-			return c.Statements, nil
+			return &c.Statements, nil
 		}
 		blockName, blockIndex, err := findAndCheckBlockHeader(loc)
 		if err != nil {
@@ -326,7 +325,7 @@ func (c *Config) FindBlock(locator string) ([]Statement, error) {
 		}
 	}
 
-	return statements, nil
+	return &now.Statements, nil
 }
 
 func findAndCheckBlockHeader(loc string) (string, int, error) {
@@ -361,7 +360,7 @@ func (c *Config) SetStatement(locator string, k, v string, addNew bool) error {
 	if err != nil {
 		return err
 	}
-	c.Statements = SetStatement(statements, k, v, addNew)
+	*statements = SetStatement(*statements, k, v, addNew)
 	return nil
 }
 

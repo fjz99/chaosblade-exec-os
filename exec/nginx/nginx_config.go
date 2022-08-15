@@ -133,6 +133,9 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 }
 
 func createNewConfig(config *parser.Config, locator string, newKV string) (string, *spec.Response) {
+	if locator == "" {
+		return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--block", locator, "block locator can't be empty")
+	}
 	pairs := parseMultipleKvPairs(newKV)
 	if pairs == nil {
 		return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--set-config", newKV)
