@@ -3,14 +3,11 @@ package nginx
 import (
 	"context"
 	"fmt"
-	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
-	"path/filepath"
-	"strconv"
-	"strings"
-
 	"github.com/chaosblade-io/chaosblade-exec-os/exec/category"
+	"github.com/chaosblade-io/chaosblade-exec-os/exec/nginx/parser"
 	"github.com/chaosblade-io/chaosblade-spec-go/spec"
 	"github.com/chaosblade-io/chaosblade-spec-go/util"
+	"path/filepath"
 )
 
 const (
@@ -28,15 +25,16 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 		spec.BaseExpActionCommandSpec{
 			ActionMatchers: []spec.ExpFlagSpec{
 				&spec.ExpFlag{
-					Name: "mode",
-					Desc: fmt.Sprintf("The configuration change mode (%s or %s)", fileMode, cmdMode),
+					Name:     "mode",
+					Desc:     fmt.Sprintf("The configuration change mode (%s or %s)", fileMode, cmdMode),
+					Required: true,
 				},
 				&spec.ExpFlag{
 					Name: "file",
 					Desc: "The new nginx.conf file",
 				},
 				&spec.ExpFlag{
-					Name: "block-id",
+					Name: "block",
 					Desc: "target block id for config modification",
 				},
 				&spec.ExpFlag{
@@ -44,36 +42,20 @@ func NewConfigActionSpec() spec.ExpActionCommandSpec {
 					Desc: "set multiple key-value config paris for specified block-id",
 				},
 			},
-			ActionFlags: []spec.ExpFlagSpec{
-				&spec.ExpFlag{
-					Name:   "list",
-					Desc:   "List all nginx config blocks",
-					NoArgs: true,
-				},
-			},
+			ActionFlags:    []spec.ExpFlagSpec{},
 			ActionExecutor: &NginxConfigExecutor{},
 			ActionExample: `
-# List all nginx.conf blocks
-blade create nginx config --list
-
 # Change config file to my.conf
 blade create nginx config --mode file --file my.conf
 
-# Change 'server' (assuming block id = 3) exposed on port 8899
-blade create nginx config --mode cmd --block-id 3 --set-config='listen=8899'
+# Change 'server'  exposed on port 8899
+blade create nginx config --mode cmd --block 'http.server[0]' --set-config='listen=8899'
 
-# Set 'location /' (assuming block id = 4) proxy_pass to www.baidu.com
-blade create nginx config --mode cmd --block-id 4 --set-config='proxy_pass=www.baidu.com'
-
-
-//!!!!!!
-//!!!
-# Revert config change, suid = xxx
-blade destroy nginx config --suid
+# Set 'location /' proxy_pass to www.baidu.com
+blade create nginx config --mode cmd --block 'http.server[0].location[0]' --set-config='proxy_pass=www.baidu.com'
 
 # Revert config change to the oldest config file
-blade destroy nginx config --force
-//!!!
+blade destroy nginx config
 `,
 			ActionPrograms:   []string{NginxConfigBin},
 			ActionCategories: []string{category.Middleware},
@@ -126,11 +108,6 @@ func (ng *NginxConfigExecutor) Exec(suid string, ctx context.Context, model *spe
 
 func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, model *spec.ExpModel) *spec.Response {
 	var config *parser.Config
-	if model.ActionFlags["list"] == "true" {
-		config, _ = parser.LoadConfig(activeFile)
-		config.ListAllBlocks()
-		return spec.Success()
-	}
 	mode := model.ActionFlags["mode"]
 	newFile := model.ActionFlags["file"]
 	switch mode {
@@ -144,7 +121,7 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 			config, _ = parser.LoadConfig(activeFile)
 		}
 		var resp *spec.Response
-		newFile, resp = createNewConfig(config, model.ActionFlags["block-id"], model.ActionFlags["set-config"])
+		newFile, resp = createNewConfig(config, model.ActionFlags["block"], model.ActionFlags["set-config"])
 		if resp != nil {
 			return resp
 		}
@@ -155,28 +132,19 @@ func (ng *NginxConfigExecutor) start(ctx context.Context, activeFile string, mod
 	return swapNginxConfig(ng.channel, ctx, newFile, model)
 }
 
-func createNewConfig(config *parser.Config, id string, newKV string) (string, *spec.Response) {
-	blocksList := config.GetBlocksList()
-	blockId, err := strconv.Atoi(id)
-	if err != nil || blockId-1 >= len(blocksList) || blockId < 0 {
-		return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--block-id", id, fmt.Sprintf("--block-id='%s' is not valid, expect %d-%d", id, 0, len(blocksList)))
+func createNewConfig(config *parser.Config, locator string, newKV string) (string, *spec.Response) {
+	pairs := parseMultipleKvPairs(newKV)
+	if pairs == nil {
+		return "", spec.ResponseFailWithFlags(spec.ParameterInvalid, "--set-config", newKV)
 	}
-	for _, kv := range strings.Split(newKV, ";") {
-		arr := strings.Split(strings.TrimSpace(kv), "=")
-		if newKV == "" || len(arr) != 2 {
-			return "", spec.ResponseFailWithFlags(spec.OsCmdExecFailed, "--set-config", newKV, fmt.Sprintf("--set-config='%s' is not valid", newKV))
-		}
-		k := strings.TrimSpace(arr[0])
-		v := strings.TrimSpace(arr[1])
-		if blockId == 0 {
-			config.Statements = parser.SetStatement(config.Statements, k, v, false)
-		} else {
-			statements := blocksList[blockId-1].Block.Statements
-			blocksList[blockId-1].Block.Statements = parser.SetStatement(statements, k, v, false)
+	for _, pair := range pairs {
+		err := config.SetStatement(locator, pair[0], pair[1], true)
+		if err != nil {
+			return "", spec.ResponseFailWithFlags(spec.OsCmdExecFailed, err.Error())
 		}
 	}
 	name := "nginx.chaosblade.tmp.conf"
-	err = config.EasyDumpToFile(name)
+	err := config.EasyDumpToFile(name)
 	if err != nil {
 		return "", spec.ReturnFail(spec.OsCmdExecFailed, err.Error())
 	}

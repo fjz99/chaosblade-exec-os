@@ -47,3 +47,46 @@ func TestLoadConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_FindBlock(t *testing.T) {
+	tests := []struct {
+		locator string
+		err     bool
+	}{
+		{locator: "", err: true},
+		{locator: "global", err: false},
+		{locator: "http.global", err: true},
+		{locator: "ccxx", err: true},
+		{locator: "http[0]", err: true},
+		{locator: "http.server[0]", err: false},
+		{locator: "http.server[1]", err: true},
+		{locator: "http.server[-1]", err: true},
+		{locator: "http.server[0].location[0]", err: true},
+	}
+
+	for _, tt := range tests {
+		config, _ := LoadConfig("test.conf")
+		t.Run("dd", func(t *testing.T) {
+			_, err := config.FindBlock(tt.locator)
+			if (tt.err && err == nil) || (!tt.err && err != nil) {
+				t.Errorf("test case err : %#v, %s", tt, err)
+			} else if err == nil {
+				err := config.SetStatement(tt.locator, "test", "value", true)
+				if err != nil {
+					t.Error(err)
+				}
+				statements, _ := config.FindBlock(tt.locator)
+				has := false
+				for _, s := range statements {
+					if s.Key == "test" && s.Value == "value" {
+						has = true
+						break
+					}
+				}
+				if !has {
+					t.Errorf("test case err, can't set statement : %#v", tt)
+				}
+			}
+		})
+	}
+}

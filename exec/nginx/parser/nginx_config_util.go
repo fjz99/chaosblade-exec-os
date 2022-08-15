@@ -1,9 +1,12 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -18,11 +21,17 @@ const (
 	Lua      = "lua"
 )
 
+var canHasIndex = map[string]bool{
+	Server:   true,
+	HTTP:     false,
+	Location: true,
+	Upstream: false,
+	Events:   false,
+}
+
 type Config struct {
 	Blocks     []Block
 	Statements []Statement
-	blockList  []ListResult //所有的block
-	idCounter  int          //blockId
 }
 type Statement struct {
 	Key   string
@@ -270,88 +279,90 @@ type ListResult struct {
 	Block  *Block
 }
 
-func newListResult(block *Block, id int) *ListResult {
-	return &ListResult{
-		Id:     id,
-		Block:  block,
-		Header: block.Header,
-		Type:   block.Type,
-	}
-}
-
 // ListAllBlocks Print Block tree
 func (c *Config) ListAllBlocks() {
-	fmt.Println("Global[nginx.conf](id=0)")
-	id := 1
-	for _, block := range c.Blocks {
-		id = c.printBlocks(&block, 1, 4, id, true)
-	}
 }
 
 // GetBlocksList Return ListResult array corresponding to Block tree
 func (c *Config) GetBlocksList() []ListResult {
-	if len(c.blockList) > 0 {
-		return c.blockList
-	}
-	id := 1
-	for i := 0; i < len(c.Blocks); i++ {
-		id = c.printBlocks(&c.Blocks[i], 1, 4, id, false)
-	}
-	return c.blockList
+	return nil
 }
 
-func (c *Config) printBlocks(block *Block, level, indent, startId int, print bool) int {
-	if print {
-		if level > 1 {
-			fmt.Printf("│%s", strings.Repeat(" ", (level-1)*(indent+1)))
-		}
-		fmt.Printf("│%s %s\n", strings.Repeat("─", indent), fmtBlockName(block, startId))
-	} else {
-		c.blockList = append(c.blockList, *newListResult(block, startId))
-	}
-
-	startId++
-	for i := 0; i < len(block.Blocks); i++ {
-		startId = c.printBlocks(&block.Blocks[i], level+1, 4, startId, print)
-	}
-	if print && block.Type != Location && block.Type != HTTP {
-		fmt.Println("│")
-	}
-
-	return startId
-}
-
-func fmtBlockName(block *Block, id int) string {
-	desc := block.Header
-	if block.Type == Server {
-		desc = Server + "{"
-		serverName := findStatement(block.Statements, "server_name")
-		port := findStatement(block.Statements, "listen")
-		if serverName == "" {
-			serverName = "unknown_host"
-		}
-		if port == "" {
-			serverName = "unknown_port"
-		}
-		if strings.Count(serverName, " ") > 0 {
-			for _, s := range strings.Split(serverName, " ") {
-				desc += fmt.Sprintf("%s:%s,", s, port)
+// FindBlock e.g., http.server[0].location[0]
+func (c *Config) FindBlock(locator string) ([]Statement, error) {
+	var now *Block = nil
+	var statements []Statement = nil
+	for idx, loc := range strings.Split(locator, ".") {
+		if loc == "global" {
+			if idx != 0 {
+				return nil, errors.New("block locator syntax err near 'global'")
 			}
-		} else {
-			desc += fmt.Sprintf("%s:%s", serverName, port)
+			return c.Statements, nil
 		}
-		desc += "}"
+		blockName, blockIndex, err := findAndCheckBlockHeader(loc)
+		if err != nil {
+			return nil, err
+		}
+
+		var blocks []Block = nil
+		if now == nil {
+			blocks = c.Blocks
+		} else {
+			blocks = now.Blocks
+		}
+		find := false
+		for i, matchedBlocks := 0, 0; i < len(blocks); i++ {
+			if blocks[i].Type == blockName {
+				if (blockIndex == -1) || (blockIndex == matchedBlocks) {
+					now = &blocks[i]
+					find = true
+					break
+				}
+				matchedBlocks++
+			}
+		}
+		if !find {
+			return nil, errors.New(fmt.Sprintf("block not found near '%s' ", loc))
+		}
 	}
-	return fmt.Sprintf("[%s] (id=%d)", desc, id)
+
+	return statements, nil
 }
 
-func findStatement(arr []Statement, key string) string {
-	for _, s := range arr {
-		if s.Key == key {
-			return s.Value
+func findAndCheckBlockHeader(loc string) (string, int, error) {
+	regex := regexp.MustCompile("(\\w+)(\\[(\\d+)])?")
+	if !regex.MatchString(loc) {
+		return "", 0, errors.New(fmt.Sprintf("block locator syntax err near '%s'", loc))
+	}
+	submatch := regex.FindStringSubmatch(loc)
+	blockName, blockIndex := submatch[1], -1
+	if submatch[3] != "" {
+		var err error
+		blockIndex, err = strconv.Atoi(submatch[3])
+		if err != nil || blockIndex < 0 {
+			return "", 0, errors.New(fmt.Sprintf("block locator syntax err near '%s' , blockIndex err: %s", loc, err.Error()))
 		}
 	}
-	return ""
+
+	for k, v := range canHasIndex {
+		if k == blockName {
+			if (v && blockIndex != -1) || (!v && blockIndex == -1) {
+				return blockName, blockIndex, nil
+			} else {
+				return "", 0, errors.New(fmt.Sprintf("illegal block near '%s'", blockName))
+			}
+		}
+	}
+	return "", 0, errors.New(fmt.Sprintf("illegal block name %s", blockName))
+}
+
+func (c *Config) SetStatement(locator string, k, v string, addNew bool) error {
+	statements, err := c.FindBlock(locator)
+	if err != nil {
+		return err
+	}
+	c.Statements = SetStatement(statements, k, v, addNew)
+	return nil
 }
 
 func SetStatement(arr []Statement, k, v string, addNew bool) []Statement {

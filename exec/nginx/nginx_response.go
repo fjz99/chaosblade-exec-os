@@ -237,7 +237,7 @@ func findServerBlock(config *parser.Config, id string) (*parser.Block, *spec.Res
 	}
 	serverId, err := strconv.Atoi(id)
 	if err != nil {
-		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--server", id, fmt.Sprintf("--server='%s' is not valid, %s", id, err))
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--server", id, err)
 	}
 
 	var http *parser.Block = nil
@@ -270,10 +270,10 @@ func createNewBlock(path, regex, code, body, header, contentType string, useLua 
 	block := parser.NewBlock()
 	pairs := parseMultipleKvPairs(header)
 	if pairs == nil && header != "" {
-		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--header", header, fmt.Sprintf("--header=%s is not valid", header))
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--header", header)
 	}
 	if _, err := strconv.Atoi(code); err != nil {
-		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--code", code, fmt.Sprintf("--code=%s is not valid, %s", code, err))
+		return nil, spec.ResponseFailWithFlags(spec.ParameterInvalid, "--code", code)
 	}
 
 	if useLua {
