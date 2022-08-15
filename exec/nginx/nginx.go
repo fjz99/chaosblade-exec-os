@@ -13,11 +13,15 @@ import (
 
 //TODO 1.parser
 //TODO 2.middleware
-//TODO 3.主仓库
+//TODO 3.主仓库 ok
 //TODO 4.单测,借助于mock channel
 //TODO 5.整理一下文档
-//TODO 6.编译出最终结果，然后测试
+//TODO 6.编译出最终结果，然后测试 ok
 //TODO 7.PR
+
+//FIXME 新的定位形式
+//FIXME parser解析lua block
+//TODO 整理代码结构
 const configBackupName = "nginx.conf.chaosblade.back"
 
 type NginxCommandSpec struct {

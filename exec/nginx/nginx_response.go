@@ -23,7 +23,7 @@ local regex = "%s"
 if (path ~= "" and uri == path) or (regex ~= "" and string.match(uri, regex))
 then
 %s
-ngx.say('%s')
+%s
 ngx.exit(%s)
 end
 `
@@ -288,7 +288,13 @@ func createNewBlock(path, regex, code, body, header, contentType string, useLua 
 		if !hasContentType {
 			headerString += fmt.Sprintf("ngx.header[\"Content-Type\"] = \"%s\"\n", contentType)
 		}
-		block.Statements = parser.SetStatement(block.Statements, fmt.Sprintf(luaCode, path, regex, headerString, body, code), "", true)
+		if body != "" {
+			block.Statements = parser.SetStatement(block.Statements,
+				fmt.Sprintf(luaCode, path, regex, headerString, fmt.Sprintf("ngx.say('%s')", body), code), "", true)
+		} else {
+			block.Statements = parser.SetStatement(block.Statements,
+				fmt.Sprintf(luaCode, path, regex, headerString, "", code), "", true)
+		}
 	} else {
 		if regex != "" {
 			return nil, spec.ReturnFail(spec.OsCmdExecFailed, "Your nginx don't have lua support, so cannot change response by --regex")
