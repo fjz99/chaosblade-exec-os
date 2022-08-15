@@ -11,6 +11,13 @@ import (
 	"strings"
 )
 
+//TODO 1.parser
+//TODO 2.middleware
+//TODO 3.主仓库
+//TODO 4.单测,借助于mock channel
+//TODO 5.整理一下文档
+//TODO 6.编译出最终结果，然后测试
+//TODO 7.PR
 const configBackupName = "nginx.conf.chaosblade.back"
 
 type NginxCommandSpec struct {

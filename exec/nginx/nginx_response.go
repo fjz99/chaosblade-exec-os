@@ -39,13 +39,6 @@ type ResponseActionSpec struct {
 	spec.BaseExpActionCommandSpec
 }
 
-//TODO 支持匹配冲突问题，即多个匹配都满足的情况
-//TODO version chain
-
-//TODO 检验保证响应替换
-//TODO 单测
-//TODO 全部仓库
-
 func NewResponseActionSpec() spec.ExpActionCommandSpec {
 	return &ResponseActionSpec{
 		spec.BaseExpActionCommandSpec{
@@ -99,8 +92,7 @@ blade create nginx response --path /test --code 200 --body '{"a":1}' --type json
 blade create nginx response --regex /t.* --code 200 --body '{"a":1}' --header 'Server=mock;' --server 0
 
 # Revert config change to the oldest config file
-blade destroy nginx response
-			`,
+blade destroy nginx response`,
 			ActionPrograms:   []string{NginxResponseBin},
 			ActionCategories: []string{category.Middleware},
 		},
@@ -150,8 +142,6 @@ func (ng *NginxResponseExecutor) Exec(suid string, ctx context.Context, model *s
 	return ng.start(ctx, activeFile, model)
 }
 
-//18.	nginx: [emerg] unknown directive "content_by_lua_block" in D:\nginx-1.9.9/conf/nginx.conf:43
-//nginx: configuration file D:\nginx-1.9.9/conf/nginx.conf test failed
 func (ng *NginxResponseExecutor) start(ctx context.Context, activeFile string, model *spec.ExpModel) *spec.Response {
 	contentType, response := getContentType(model.ActionFlags["type"])
 	if response != nil {
@@ -167,6 +157,8 @@ func (ng *NginxResponseExecutor) start(ctx context.Context, activeFile string, m
 		errMsg := response.Err
 		if strings.Contains(errMsg, `unknown directive "rewrite_by_lua_block"`) {
 			//don't support lua, fallback
+			//e.g.,nginx: [emerg] unknown directive "content_by_lua_block" in D:\nginx-1.9.9/conf/nginx.conf:43
+			//nginx: configuration file D:\nginx-1.9.9/conf/nginx.conf test failed
 			newFile, response := setResponse(model, activeFile, contentType, false)
 			if response != nil {
 				return response

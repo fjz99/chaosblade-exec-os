@@ -7,7 +7,8 @@ import (
 	"strings"
 )
 
-//java org.antlr.v4.Tool -Dlanguage=Go -visitor -no-listener .\Nginx.g4
+//go:generate java org.antlr.v4.Tool -Dlanguage=Go -visitor -no-listener Nginx.g4
+
 const (
 	Server   = "server"
 	HTTP     = "http"
@@ -257,15 +258,16 @@ func dumpAllBlocks(file *os.File, space string, indent, delta int, blocks []Bloc
 func writeWithIndent(file *os.File, space string, indent int, s string) {
 	_, err := file.WriteString(strings.Repeat(space, indent) + s)
 	if err != nil {
+		//TODO
 		panic(err)
 	}
 }
 
 type ListResult struct {
-	Id     int    `json:"id"`
-	Type   string `json:"type"`
-	Header string `json:"blockHeader"`
-	Block  *Block `json:"-"` //don't export
+	Id     int
+	Type   string
+	Header string
+	Block  *Block
 }
 
 func newListResult(block *Block, id int) *ListResult {
@@ -308,7 +310,7 @@ func (c *Config) printBlocks(block *Block, level, indent, startId int, print boo
 		c.blockList = append(c.blockList, *newListResult(block, startId))
 	}
 
-	startId = startId + 1
+	startId++
 	for i := 0; i < len(block.Blocks); i++ {
 		startId = c.printBlocks(&block.Blocks[i], level+1, 4, startId, print)
 	}

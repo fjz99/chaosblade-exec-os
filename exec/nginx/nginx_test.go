@@ -171,5 +171,26 @@ func TestCancelResponseChange(t *testing.T) {
 }
 
 func TestTmp(t *testing.T) {
+	s := NewResponseActionSpec()
+	executor := s.Executor()
+	executor.SetChannel(setUpMockChannel())
+	model := spec.ExpModel{}
+	model.ActionFlags = make(map[string]string)
 
+	response := executor.Exec(suid, context.WithValue(context.Background(), "suid", suid), &model)
+	fmt.Println(response)
+}
+
+func setUpMockChannel() spec.Channel {
+	mockChannel := channel.NewMockLocalChannel().(*channel.MockLocalChannel)
+	mockChannel.RunFunc = func(ctx context.Context, script, args string) *spec.Response {
+		r := regexp.MustCompile(".*nginx\\s+-t.*")
+		if r.MatchString(script) {
+			return spec.ReturnSuccess(`nginx: the configuration file /usr/local/openresty/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/openresty/nginx/conf/nginx.conf test is successful
+`)
+		}
+		return spec.ReturnSuccess("")
+	}
+	return mockChannel
 }
