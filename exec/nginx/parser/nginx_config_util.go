@@ -279,15 +279,6 @@ type ListResult struct {
 	Block  *Block
 }
 
-// ListAllBlocks Print Block tree
-func (c *Config) ListAllBlocks() {
-}
-
-// GetBlocksList Return ListResult array corresponding to Block tree
-func (c *Config) GetBlocksList() []ListResult {
-	return nil
-}
-
 // FindBlock e.g., http.server[0].location[0]
 func (c *Config) FindBlock(locator string) (*[]Statement, error) {
 	var now *Block = nil

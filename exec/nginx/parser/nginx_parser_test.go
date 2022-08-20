@@ -43,10 +43,3 @@ func Test2(t *testing.T) {
 	config, _ := LoadConfig("test.conf")
 	config.EasyDumpToFile("out.conf")
 }
-
-func TestPrint(t *testing.T) {
-	config, _ := LoadConfig("test.conf")
-	config.ListAllBlocks()
-	list := config.GetBlocksList()
-	fmt.Println(list)
-}
