@@ -27,13 +27,20 @@ func Test1(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	//input := antlr.NewInputStream(`rewrite_by_lua_block {
-	//	local uri=ngx.var.uri;
-	//	if uri == "/tt"
-	//	then
-	//		ngx.say(uri);
-	//		ngx.exit(200);
-	//	end}`)
+	//input := antlr.NewInputStream(`
+	//
+	//#user  nobody;
+	//worker_processes  1;
+	//
+	//#error_log  logs/error.log;
+	//#error_log  logs/error.log  notice;
+	//#error_log  logs/error.log  info;
+	//
+	//#pid        logs/nginx.pid;
+	//
+	//events {
+	//   worker_connections  1024;
+	//}`)
 	lexer := NewNginxLexer(input)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := NewNginxParser(stream)
@@ -43,7 +50,7 @@ func Test1(t *testing.T) {
 	fmt.Println(tree.ToStringTree(nil, p))
 	visitor := newMappingVisitor()
 	config := tree.Accept(visitor).(*Config)
-	fmt.Println(config)
+	//fmt.Println(config)
 
 	config.EasyDumpToFile("out.conf")
 }

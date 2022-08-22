@@ -7,7 +7,7 @@ config
 
 statement
    :
-   ( rewriteStatement | genericStatement | regexHeaderStatement) ';' NEWLINE?
+   NEWLINE? ( rewriteStatement | genericStatement | regexHeaderStatement) ';' NEWLINE?
    ;
 
 genericStatement
@@ -29,6 +29,7 @@ LUA_HEADER
 
 luaBlock
    :
+   NEWLINE?
    LUA_HEADER NEWLINE?
    '{'  NEWLINE?
    luaStatement *
@@ -47,6 +48,7 @@ luaStatement
 
 block
   :
+  NEWLINE?
   ( locationBlockHeader | genericBlockHeader ) NEWLINE?
   '{' NEWLINE?
   (( statement | block | ifStatement | luaBlock ) NEWLINE? ) *
@@ -114,7 +116,7 @@ STR_EXT
 LINE_COMMENT: (
         ('-- ' | '#') ~[\r\n]* ('\r'? '\n' | EOF)
         | '--' ('\r'? '\n' | EOF)
-    ) -> skip;
+    ) NEWLINE? -> skip;
 
 REGEXP_PREFIXED
   : (RegexpPrefix)[a-zA-Z0-9_/.,\-:=~+!?$&^*[\]@|#)(]+
