@@ -33,73 +33,113 @@ var nginxParserStaticData struct {
 func nginxParserInit() {
 	staticData := &nginxParserStaticData
 	staticData.literalNames = []string{
-		"", "';'", "'{'", "'}'", "'if'", "'('", "')'", "'\\.'", "'^'", "'location'",
+		"", "';'", "'{'", "'}'", "'if'", "')'", "'('", "'\\.'", "'^'", "'location'",
 		"'rewrite'", "'last'", "'break'", "'redirect'", "'permanent'",
 	}
 	staticData.symbolicNames = []string{
-		"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Value",
-		"STR_EXT", "LINE_COMMENT", "REGEXP_PREFIXED", "QUOTED_STRING", "SINGLE_QUOTED",
-		"WS",
+		"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "LUA_HEADER",
+		"Value", "STR_EXT", "LINE_COMMENT", "REGEXP_PREFIXED", "QUOTED_STRING",
+		"SINGLE_QUOTED", "WS", "NEWLINE",
 	}
 	staticData.ruleNames = []string{
-		"config", "statement", "genericStatement", "regexHeaderStatement", "block",
-		"genericBlockHeader", "ifStatement", "ifBody", "regexp", "locationBlockHeader",
-		"rewriteStatement",
+		"config", "statement", "genericStatement", "regexHeaderStatement", "luaBlock",
+		"luaStatement", "block", "genericBlockHeader", "ifStatement", "ifBody",
+		"regexp", "locationBlockHeader", "rewriteStatement",
 	}
 	staticData.predictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 21, 120, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 23, 197, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
-		10, 1, 0, 1, 0, 4, 0, 25, 8, 0, 11, 0, 12, 0, 26, 1, 1, 1, 1, 1, 1, 3,
-		1, 32, 8, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 5, 2, 39, 8, 2, 10, 2, 12, 2,
-		42, 9, 2, 1, 3, 1, 3, 1, 3, 1, 4, 1, 4, 3, 4, 49, 8, 4, 1, 4, 1, 4, 1,
-		4, 1, 4, 5, 4, 55, 8, 4, 10, 4, 12, 4, 58, 9, 4, 1, 4, 1, 4, 1, 5, 1, 5,
-		1, 5, 5, 5, 65, 8, 5, 10, 5, 12, 5, 68, 9, 5, 1, 6, 1, 6, 1, 6, 1, 6, 5,
-		6, 74, 8, 6, 10, 6, 12, 6, 77, 9, 6, 1, 6, 1, 6, 1, 7, 1, 7, 1, 7, 3, 7,
-		84, 8, 7, 1, 7, 1, 7, 3, 7, 88, 8, 7, 1, 7, 1, 7, 1, 8, 1, 8, 1, 8, 1,
-		8, 1, 8, 1, 8, 1, 8, 4, 8, 99, 8, 8, 11, 8, 12, 8, 100, 1, 9, 1, 9, 3,
-		9, 105, 8, 9, 1, 9, 1, 9, 3, 9, 109, 8, 9, 1, 10, 1, 10, 1, 10, 3, 10,
-		114, 8, 10, 1, 10, 1, 10, 3, 10, 118, 8, 10, 1, 10, 0, 0, 11, 0, 2, 4,
-		6, 8, 10, 12, 14, 16, 18, 20, 0, 1, 1, 0, 11, 14, 132, 0, 24, 1, 0, 0,
-		0, 2, 31, 1, 0, 0, 0, 4, 35, 1, 0, 0, 0, 6, 43, 1, 0, 0, 0, 8, 48, 1, 0,
-		0, 0, 10, 61, 1, 0, 0, 0, 12, 69, 1, 0, 0, 0, 14, 80, 1, 0, 0, 0, 16, 98,
-		1, 0, 0, 0, 18, 102, 1, 0, 0, 0, 20, 110, 1, 0, 0, 0, 22, 25, 3, 2, 1,
-		0, 23, 25, 3, 8, 4, 0, 24, 22, 1, 0, 0, 0, 24, 23, 1, 0, 0, 0, 25, 26,
-		1, 0, 0, 0, 26, 24, 1, 0, 0, 0, 26, 27, 1, 0, 0, 0, 27, 1, 1, 0, 0, 0,
-		28, 32, 3, 20, 10, 0, 29, 32, 3, 4, 2, 0, 30, 32, 3, 6, 3, 0, 31, 28, 1,
-		0, 0, 0, 31, 29, 1, 0, 0, 0, 31, 30, 1, 0, 0, 0, 32, 33, 1, 0, 0, 0, 33,
-		34, 5, 1, 0, 0, 34, 3, 1, 0, 0, 0, 35, 40, 5, 15, 0, 0, 36, 39, 5, 15,
-		0, 0, 37, 39, 3, 16, 8, 0, 38, 36, 1, 0, 0, 0, 38, 37, 1, 0, 0, 0, 39,
-		42, 1, 0, 0, 0, 40, 38, 1, 0, 0, 0, 40, 41, 1, 0, 0, 0, 41, 5, 1, 0, 0,
-		0, 42, 40, 1, 0, 0, 0, 43, 44, 5, 18, 0, 0, 44, 45, 5, 15, 0, 0, 45, 7,
-		1, 0, 0, 0, 46, 49, 3, 18, 9, 0, 47, 49, 3, 10, 5, 0, 48, 46, 1, 0, 0,
-		0, 48, 47, 1, 0, 0, 0, 49, 50, 1, 0, 0, 0, 50, 56, 5, 2, 0, 0, 51, 55,
-		3, 2, 1, 0, 52, 55, 3, 8, 4, 0, 53, 55, 3, 12, 6, 0, 54, 51, 1, 0, 0, 0,
-		54, 52, 1, 0, 0, 0, 54, 53, 1, 0, 0, 0, 55, 58, 1, 0, 0, 0, 56, 54, 1,
-		0, 0, 0, 56, 57, 1, 0, 0, 0, 57, 59, 1, 0, 0, 0, 58, 56, 1, 0, 0, 0, 59,
-		60, 5, 3, 0, 0, 60, 9, 1, 0, 0, 0, 61, 66, 5, 15, 0, 0, 62, 65, 5, 15,
-		0, 0, 63, 65, 3, 16, 8, 0, 64, 62, 1, 0, 0, 0, 64, 63, 1, 0, 0, 0, 65,
-		68, 1, 0, 0, 0, 66, 64, 1, 0, 0, 0, 66, 67, 1, 0, 0, 0, 67, 11, 1, 0, 0,
-		0, 68, 66, 1, 0, 0, 0, 69, 70, 5, 4, 0, 0, 70, 71, 3, 14, 7, 0, 71, 75,
-		5, 2, 0, 0, 72, 74, 3, 2, 1, 0, 73, 72, 1, 0, 0, 0, 74, 77, 1, 0, 0, 0,
-		75, 73, 1, 0, 0, 0, 75, 76, 1, 0, 0, 0, 76, 78, 1, 0, 0, 0, 77, 75, 1,
-		0, 0, 0, 78, 79, 5, 3, 0, 0, 79, 13, 1, 0, 0, 0, 80, 81, 5, 5, 0, 0, 81,
-		83, 5, 15, 0, 0, 82, 84, 5, 15, 0, 0, 83, 82, 1, 0, 0, 0, 83, 84, 1, 0,
-		0, 0, 84, 87, 1, 0, 0, 0, 85, 88, 5, 15, 0, 0, 86, 88, 3, 16, 8, 0, 87,
-		85, 1, 0, 0, 0, 87, 86, 1, 0, 0, 0, 87, 88, 1, 0, 0, 0, 88, 89, 1, 0, 0,
-		0, 89, 90, 5, 6, 0, 0, 90, 15, 1, 0, 0, 0, 91, 99, 5, 7, 0, 0, 92, 99,
-		5, 8, 0, 0, 93, 99, 5, 15, 0, 0, 94, 95, 5, 5, 0, 0, 95, 96, 3, 16, 8,
-		0, 96, 97, 5, 6, 0, 0, 97, 99, 1, 0, 0, 0, 98, 91, 1, 0, 0, 0, 98, 92,
-		1, 0, 0, 0, 98, 93, 1, 0, 0, 0, 98, 94, 1, 0, 0, 0, 99, 100, 1, 0, 0, 0,
-		100, 98, 1, 0, 0, 0, 100, 101, 1, 0, 0, 0, 101, 17, 1, 0, 0, 0, 102, 104,
-		5, 9, 0, 0, 103, 105, 5, 15, 0, 0, 104, 103, 1, 0, 0, 0, 104, 105, 1, 0,
-		0, 0, 105, 108, 1, 0, 0, 0, 106, 109, 5, 15, 0, 0, 107, 109, 3, 16, 8,
-		0, 108, 106, 1, 0, 0, 0, 108, 107, 1, 0, 0, 0, 109, 19, 1, 0, 0, 0, 110,
-		113, 5, 10, 0, 0, 111, 114, 5, 15, 0, 0, 112, 114, 3, 16, 8, 0, 113, 111,
-		1, 0, 0, 0, 113, 112, 1, 0, 0, 0, 114, 115, 1, 0, 0, 0, 115, 117, 5, 15,
-		0, 0, 116, 118, 7, 0, 0, 0, 117, 116, 1, 0, 0, 0, 117, 118, 1, 0, 0, 0,
-		118, 21, 1, 0, 0, 0, 19, 24, 26, 31, 38, 40, 48, 54, 56, 64, 66, 75, 83,
-		87, 98, 100, 104, 108, 113, 117,
+		10, 2, 11, 7, 11, 2, 12, 7, 12, 1, 0, 1, 0, 1, 0, 4, 0, 30, 8, 0, 11, 0,
+		12, 0, 31, 1, 1, 1, 1, 1, 1, 3, 1, 37, 8, 1, 1, 1, 1, 1, 3, 1, 41, 8, 1,
+		1, 2, 1, 2, 1, 2, 5, 2, 46, 8, 2, 10, 2, 12, 2, 49, 9, 2, 1, 3, 1, 3, 1,
+		3, 1, 4, 1, 4, 3, 4, 56, 8, 4, 1, 4, 1, 4, 3, 4, 60, 8, 4, 1, 4, 5, 4,
+		63, 8, 4, 10, 4, 12, 4, 66, 9, 4, 1, 4, 1, 4, 3, 4, 70, 8, 4, 1, 5, 4,
+		5, 73, 8, 5, 11, 5, 12, 5, 74, 1, 5, 3, 5, 78, 8, 5, 1, 5, 3, 5, 81, 8,
+		5, 1, 5, 3, 5, 84, 8, 5, 1, 6, 1, 6, 3, 6, 88, 8, 6, 1, 6, 3, 6, 91, 8,
+		6, 1, 6, 1, 6, 3, 6, 95, 8, 6, 1, 6, 1, 6, 1, 6, 1, 6, 3, 6, 101, 8, 6,
+		1, 6, 3, 6, 104, 8, 6, 5, 6, 106, 8, 6, 10, 6, 12, 6, 109, 9, 6, 1, 6,
+		1, 6, 3, 6, 113, 8, 6, 1, 7, 1, 7, 1, 7, 5, 7, 118, 8, 7, 10, 7, 12, 7,
+		121, 9, 7, 1, 8, 1, 8, 3, 8, 125, 8, 8, 1, 8, 1, 8, 3, 8, 129, 8, 8, 1,
+		8, 1, 8, 3, 8, 133, 8, 8, 1, 8, 1, 8, 3, 8, 137, 8, 8, 5, 8, 139, 8, 8,
+		10, 8, 12, 8, 142, 9, 8, 1, 8, 1, 8, 3, 8, 146, 8, 8, 1, 9, 1, 9, 3, 9,
+		150, 8, 9, 1, 9, 4, 9, 153, 8, 9, 11, 9, 12, 9, 154, 1, 9, 3, 9, 158, 8,
+		9, 1, 9, 1, 9, 3, 9, 162, 8, 9, 1, 9, 3, 9, 165, 8, 9, 1, 9, 1, 9, 1, 10,
+		1, 10, 1, 10, 1, 10, 1, 10, 1, 10, 1, 10, 4, 10, 176, 8, 10, 11, 10, 12,
+		10, 177, 1, 11, 1, 11, 3, 11, 182, 8, 11, 1, 11, 1, 11, 3, 11, 186, 8,
+		11, 1, 12, 1, 12, 1, 12, 3, 12, 191, 8, 12, 1, 12, 1, 12, 3, 12, 195, 8,
+		12, 1, 12, 0, 0, 13, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 0,
+		2, 2, 0, 4, 6, 16, 16, 1, 0, 11, 14, 230, 0, 29, 1, 0, 0, 0, 2, 36, 1,
+		0, 0, 0, 4, 42, 1, 0, 0, 0, 6, 50, 1, 0, 0, 0, 8, 53, 1, 0, 0, 0, 10, 80,
+		1, 0, 0, 0, 12, 87, 1, 0, 0, 0, 14, 114, 1, 0, 0, 0, 16, 122, 1, 0, 0,
+		0, 18, 147, 1, 0, 0, 0, 20, 175, 1, 0, 0, 0, 22, 179, 1, 0, 0, 0, 24, 187,
+		1, 0, 0, 0, 26, 30, 3, 2, 1, 0, 27, 30, 3, 12, 6, 0, 28, 30, 3, 8, 4, 0,
+		29, 26, 1, 0, 0, 0, 29, 27, 1, 0, 0, 0, 29, 28, 1, 0, 0, 0, 30, 31, 1,
+		0, 0, 0, 31, 29, 1, 0, 0, 0, 31, 32, 1, 0, 0, 0, 32, 1, 1, 0, 0, 0, 33,
+		37, 3, 24, 12, 0, 34, 37, 3, 4, 2, 0, 35, 37, 3, 6, 3, 0, 36, 33, 1, 0,
+		0, 0, 36, 34, 1, 0, 0, 0, 36, 35, 1, 0, 0, 0, 37, 38, 1, 0, 0, 0, 38, 40,
+		5, 1, 0, 0, 39, 41, 5, 23, 0, 0, 40, 39, 1, 0, 0, 0, 40, 41, 1, 0, 0, 0,
+		41, 3, 1, 0, 0, 0, 42, 47, 5, 16, 0, 0, 43, 46, 5, 16, 0, 0, 44, 46, 3,
+		20, 10, 0, 45, 43, 1, 0, 0, 0, 45, 44, 1, 0, 0, 0, 46, 49, 1, 0, 0, 0,
+		47, 45, 1, 0, 0, 0, 47, 48, 1, 0, 0, 0, 48, 5, 1, 0, 0, 0, 49, 47, 1, 0,
+		0, 0, 50, 51, 5, 19, 0, 0, 51, 52, 5, 16, 0, 0, 52, 7, 1, 0, 0, 0, 53,
+		55, 5, 15, 0, 0, 54, 56, 5, 23, 0, 0, 55, 54, 1, 0, 0, 0, 55, 56, 1, 0,
+		0, 0, 56, 57, 1, 0, 0, 0, 57, 59, 5, 2, 0, 0, 58, 60, 5, 23, 0, 0, 59,
+		58, 1, 0, 0, 0, 59, 60, 1, 0, 0, 0, 60, 64, 1, 0, 0, 0, 61, 63, 3, 10,
+		5, 0, 62, 61, 1, 0, 0, 0, 63, 66, 1, 0, 0, 0, 64, 62, 1, 0, 0, 0, 64, 65,
+		1, 0, 0, 0, 65, 67, 1, 0, 0, 0, 66, 64, 1, 0, 0, 0, 67, 69, 5, 3, 0, 0,
+		68, 70, 5, 23, 0, 0, 69, 68, 1, 0, 0, 0, 69, 70, 1, 0, 0, 0, 70, 9, 1,
+		0, 0, 0, 71, 73, 7, 0, 0, 0, 72, 71, 1, 0, 0, 0, 73, 74, 1, 0, 0, 0, 74,
+		72, 1, 0, 0, 0, 74, 75, 1, 0, 0, 0, 75, 77, 1, 0, 0, 0, 76, 78, 5, 1, 0,
+		0, 77, 76, 1, 0, 0, 0, 77, 78, 1, 0, 0, 0, 78, 81, 1, 0, 0, 0, 79, 81,
+		5, 1, 0, 0, 80, 72, 1, 0, 0, 0, 80, 79, 1, 0, 0, 0, 81, 83, 1, 0, 0, 0,
+		82, 84, 5, 23, 0, 0, 83, 82, 1, 0, 0, 0, 83, 84, 1, 0, 0, 0, 84, 11, 1,
+		0, 0, 0, 85, 88, 3, 22, 11, 0, 86, 88, 3, 14, 7, 0, 87, 85, 1, 0, 0, 0,
+		87, 86, 1, 0, 0, 0, 88, 90, 1, 0, 0, 0, 89, 91, 5, 23, 0, 0, 90, 89, 1,
+		0, 0, 0, 90, 91, 1, 0, 0, 0, 91, 92, 1, 0, 0, 0, 92, 94, 5, 2, 0, 0, 93,
+		95, 5, 23, 0, 0, 94, 93, 1, 0, 0, 0, 94, 95, 1, 0, 0, 0, 95, 107, 1, 0,
+		0, 0, 96, 101, 3, 2, 1, 0, 97, 101, 3, 12, 6, 0, 98, 101, 3, 16, 8, 0,
+		99, 101, 3, 8, 4, 0, 100, 96, 1, 0, 0, 0, 100, 97, 1, 0, 0, 0, 100, 98,
+		1, 0, 0, 0, 100, 99, 1, 0, 0, 0, 101, 103, 1, 0, 0, 0, 102, 104, 5, 23,
+		0, 0, 103, 102, 1, 0, 0, 0, 103, 104, 1, 0, 0, 0, 104, 106, 1, 0, 0, 0,
+		105, 100, 1, 0, 0, 0, 106, 109, 1, 0, 0, 0, 107, 105, 1, 0, 0, 0, 107,
+		108, 1, 0, 0, 0, 108, 110, 1, 0, 0, 0, 109, 107, 1, 0, 0, 0, 110, 112,
+		5, 3, 0, 0, 111, 113, 5, 23, 0, 0, 112, 111, 1, 0, 0, 0, 112, 113, 1, 0,
+		0, 0, 113, 13, 1, 0, 0, 0, 114, 119, 5, 16, 0, 0, 115, 118, 5, 16, 0, 0,
+		116, 118, 3, 20, 10, 0, 117, 115, 1, 0, 0, 0, 117, 116, 1, 0, 0, 0, 118,
+		121, 1, 0, 0, 0, 119, 117, 1, 0, 0, 0, 119, 120, 1, 0, 0, 0, 120, 15, 1,
+		0, 0, 0, 121, 119, 1, 0, 0, 0, 122, 124, 5, 4, 0, 0, 123, 125, 5, 23, 0,
+		0, 124, 123, 1, 0, 0, 0, 124, 125, 1, 0, 0, 0, 125, 126, 1, 0, 0, 0, 126,
+		128, 3, 18, 9, 0, 127, 129, 5, 23, 0, 0, 128, 127, 1, 0, 0, 0, 128, 129,
+		1, 0, 0, 0, 129, 130, 1, 0, 0, 0, 130, 132, 5, 2, 0, 0, 131, 133, 5, 23,
+		0, 0, 132, 131, 1, 0, 0, 0, 132, 133, 1, 0, 0, 0, 133, 140, 1, 0, 0, 0,
+		134, 136, 3, 2, 1, 0, 135, 137, 5, 23, 0, 0, 136, 135, 1, 0, 0, 0, 136,
+		137, 1, 0, 0, 0, 137, 139, 1, 0, 0, 0, 138, 134, 1, 0, 0, 0, 139, 142,
+		1, 0, 0, 0, 140, 138, 1, 0, 0, 0, 140, 141, 1, 0, 0, 0, 141, 143, 1, 0,
+		0, 0, 142, 140, 1, 0, 0, 0, 143, 145, 5, 3, 0, 0, 144, 146, 5, 23, 0, 0,
+		145, 144, 1, 0, 0, 0, 145, 146, 1, 0, 0, 0, 146, 17, 1, 0, 0, 0, 147, 149,
+		5, 6, 0, 0, 148, 150, 5, 23, 0, 0, 149, 148, 1, 0, 0, 0, 149, 150, 1, 0,
+		0, 0, 150, 152, 1, 0, 0, 0, 151, 153, 5, 16, 0, 0, 152, 151, 1, 0, 0, 0,
+		153, 154, 1, 0, 0, 0, 154, 152, 1, 0, 0, 0, 154, 155, 1, 0, 0, 0, 155,
+		157, 1, 0, 0, 0, 156, 158, 5, 23, 0, 0, 157, 156, 1, 0, 0, 0, 157, 158,
+		1, 0, 0, 0, 158, 161, 1, 0, 0, 0, 159, 162, 5, 16, 0, 0, 160, 162, 3, 20,
+		10, 0, 161, 159, 1, 0, 0, 0, 161, 160, 1, 0, 0, 0, 161, 162, 1, 0, 0, 0,
+		162, 164, 1, 0, 0, 0, 163, 165, 5, 23, 0, 0, 164, 163, 1, 0, 0, 0, 164,
+		165, 1, 0, 0, 0, 165, 166, 1, 0, 0, 0, 166, 167, 5, 5, 0, 0, 167, 19, 1,
+		0, 0, 0, 168, 176, 5, 7, 0, 0, 169, 176, 5, 8, 0, 0, 170, 176, 5, 16, 0,
+		0, 171, 172, 5, 6, 0, 0, 172, 173, 3, 20, 10, 0, 173, 174, 5, 5, 0, 0,
+		174, 176, 1, 0, 0, 0, 175, 168, 1, 0, 0, 0, 175, 169, 1, 0, 0, 0, 175,
+		170, 1, 0, 0, 0, 175, 171, 1, 0, 0, 0, 176, 177, 1, 0, 0, 0, 177, 175,
+		1, 0, 0, 0, 177, 178, 1, 0, 0, 0, 178, 21, 1, 0, 0, 0, 179, 181, 5, 9,
+		0, 0, 180, 182, 5, 16, 0, 0, 181, 180, 1, 0, 0, 0, 181, 182, 1, 0, 0, 0,
+		182, 185, 1, 0, 0, 0, 183, 186, 5, 16, 0, 0, 184, 186, 3, 20, 10, 0, 185,
+		183, 1, 0, 0, 0, 185, 184, 1, 0, 0, 0, 186, 23, 1, 0, 0, 0, 187, 190, 5,
+		10, 0, 0, 188, 191, 5, 16, 0, 0, 189, 191, 3, 20, 10, 0, 190, 188, 1, 0,
+		0, 0, 190, 189, 1, 0, 0, 0, 191, 192, 1, 0, 0, 0, 192, 194, 5, 16, 0, 0,
+		193, 195, 7, 1, 0, 0, 194, 193, 1, 0, 0, 0, 194, 195, 1, 0, 0, 0, 195,
+		25, 1, 0, 0, 0, 40, 29, 31, 36, 40, 45, 47, 55, 59, 64, 69, 74, 77, 80,
+		83, 87, 90, 94, 100, 103, 107, 112, 117, 119, 124, 128, 132, 136, 140,
+		145, 149, 154, 157, 161, 164, 175, 177, 181, 185, 190, 194,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -152,13 +192,15 @@ const (
 	NginxParserT__11           = 12
 	NginxParserT__12           = 13
 	NginxParserT__13           = 14
-	NginxParserValue           = 15
-	NginxParserSTR_EXT         = 16
-	NginxParserLINE_COMMENT    = 17
-	NginxParserREGEXP_PREFIXED = 18
-	NginxParserQUOTED_STRING   = 19
-	NginxParserSINGLE_QUOTED   = 20
-	NginxParserWS              = 21
+	NginxParserLUA_HEADER      = 15
+	NginxParserValue           = 16
+	NginxParserSTR_EXT         = 17
+	NginxParserLINE_COMMENT    = 18
+	NginxParserREGEXP_PREFIXED = 19
+	NginxParserQUOTED_STRING   = 20
+	NginxParserSINGLE_QUOTED   = 21
+	NginxParserWS              = 22
+	NginxParserNEWLINE         = 23
 )
 
 // NginxParser rules.
@@ -167,13 +209,15 @@ const (
 	NginxParserRULE_statement            = 1
 	NginxParserRULE_genericStatement     = 2
 	NginxParserRULE_regexHeaderStatement = 3
-	NginxParserRULE_block                = 4
-	NginxParserRULE_genericBlockHeader   = 5
-	NginxParserRULE_ifStatement          = 6
-	NginxParserRULE_ifBody               = 7
-	NginxParserRULE_regexp               = 8
-	NginxParserRULE_locationBlockHeader  = 9
-	NginxParserRULE_rewriteStatement     = 10
+	NginxParserRULE_luaBlock             = 4
+	NginxParserRULE_luaStatement         = 5
+	NginxParserRULE_block                = 6
+	NginxParserRULE_genericBlockHeader   = 7
+	NginxParserRULE_ifStatement          = 8
+	NginxParserRULE_ifBody               = 9
+	NginxParserRULE_regexp               = 10
+	NginxParserRULE_locationBlockHeader  = 11
+	NginxParserRULE_rewriteStatement     = 12
 )
 
 // IConfigContext is an interface to support dynamic dispatch.
@@ -296,6 +340,47 @@ func (s *ConfigContext) Block(i int) IBlockContext {
 	return t.(IBlockContext)
 }
 
+func (s *ConfigContext) AllLuaBlock() []ILuaBlockContext {
+	children := s.GetChildren()
+	len := 0
+	for _, ctx := range children {
+		if _, ok := ctx.(ILuaBlockContext); ok {
+			len++
+		}
+	}
+
+	tst := make([]ILuaBlockContext, len)
+	i := 0
+	for _, ctx := range children {
+		if t, ok := ctx.(ILuaBlockContext); ok {
+			tst[i] = t.(ILuaBlockContext)
+			i++
+		}
+	}
+
+	return tst
+}
+
+func (s *ConfigContext) LuaBlock(i int) ILuaBlockContext {
+	var t antlr.RuleContext
+	j := 0
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(ILuaBlockContext); ok {
+			if j == i {
+				t = ctx.(antlr.RuleContext)
+				break
+			}
+			j++
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(ILuaBlockContext)
+}
+
 func (s *ConfigContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -339,29 +424,35 @@ func (p *NginxParser) Config() (localctx IConfigContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(24)
+	p.SetState(29)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for ok := true; ok; ok = (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__8)|(1<<NginxParserT__9)|(1<<NginxParserValue)|(1<<NginxParserREGEXP_PREFIXED))) != 0) {
-		p.SetState(24)
+	for ok := true; ok; ok = (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__8)|(1<<NginxParserT__9)|(1<<NginxParserLUA_HEADER)|(1<<NginxParserValue)|(1<<NginxParserREGEXP_PREFIXED))) != 0) {
+		p.SetState(29)
 		p.GetErrorHandler().Sync(p)
 		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 0, p.GetParserRuleContext()) {
 		case 1:
 			{
-				p.SetState(22)
+				p.SetState(26)
 				p.Statement()
 			}
 
 		case 2:
 			{
-				p.SetState(23)
+				p.SetState(27)
 				p.Block()
+			}
+
+		case 3:
+			{
+				p.SetState(28)
+				p.LuaBlock()
 			}
 
 		}
 
-		p.SetState(26)
+		p.SetState(31)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -455,6 +546,10 @@ func (s *StatementContext) RegexHeaderStatement() IRegexHeaderStatementContext {
 	return t.(IRegexHeaderStatementContext)
 }
 
+func (s *StatementContext) NEWLINE() antlr.TerminalNode {
+	return s.GetToken(NginxParserNEWLINE, 0)
+}
+
 func (s *StatementContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -497,25 +592,25 @@ func (p *NginxParser) Statement() (localctx IStatementContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(31)
+	p.SetState(36)
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
 	case NginxParserT__9:
 		{
-			p.SetState(28)
+			p.SetState(33)
 			p.RewriteStatement()
 		}
 
 	case NginxParserValue:
 		{
-			p.SetState(29)
+			p.SetState(34)
 			p.GenericStatement()
 		}
 
 	case NginxParserREGEXP_PREFIXED:
 		{
-			p.SetState(30)
+			p.SetState(35)
 			p.RegexHeaderStatement()
 		}
 
@@ -523,8 +618,18 @@ func (p *NginxParser) Statement() (localctx IStatementContext) {
 		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
 	}
 	{
-		p.SetState(33)
+		p.SetState(38)
 		p.Match(NginxParserT__0)
+	}
+	p.SetState(40)
+	p.GetErrorHandler().Sync(p)
+
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 3, p.GetParserRuleContext()) == 1 {
+		{
+			p.SetState(39)
+			p.Match(NginxParserNEWLINE)
+		}
+
 	}
 
 	return localctx
@@ -661,32 +766,32 @@ func (p *NginxParser) GenericStatement() (localctx IGenericStatementContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(35)
+		p.SetState(42)
 		p.Match(NginxParserValue)
 	}
-	p.SetState(40)
+	p.SetState(47)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__4)|(1<<NginxParserT__6)|(1<<NginxParserT__7)|(1<<NginxParserValue))) != 0 {
-		p.SetState(38)
+	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__5)|(1<<NginxParserT__6)|(1<<NginxParserT__7)|(1<<NginxParserValue))) != 0 {
+		p.SetState(45)
 		p.GetErrorHandler().Sync(p)
-		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 3, p.GetParserRuleContext()) {
+		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 4, p.GetParserRuleContext()) {
 		case 1:
 			{
-				p.SetState(36)
+				p.SetState(43)
 				p.Match(NginxParserValue)
 			}
 
 		case 2:
 			{
-				p.SetState(37)
+				p.SetState(44)
 				p.Regexp()
 			}
 
 		}
 
-		p.SetState(42)
+		p.SetState(49)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -783,12 +888,369 @@ func (p *NginxParser) RegexHeaderStatement() (localctx IRegexHeaderStatementCont
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(43)
+		p.SetState(50)
 		p.Match(NginxParserREGEXP_PREFIXED)
 	}
 	{
-		p.SetState(44)
+		p.SetState(51)
 		p.Match(NginxParserValue)
+	}
+
+	return localctx
+}
+
+// ILuaBlockContext is an interface to support dynamic dispatch.
+type ILuaBlockContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// IsLuaBlockContext differentiates from other interfaces.
+	IsLuaBlockContext()
+}
+
+type LuaBlockContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyLuaBlockContext() *LuaBlockContext {
+	var p = new(LuaBlockContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = NginxParserRULE_luaBlock
+	return p
+}
+
+func (*LuaBlockContext) IsLuaBlockContext() {}
+
+func NewLuaBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *LuaBlockContext {
+	var p = new(LuaBlockContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = NginxParserRULE_luaBlock
+
+	return p
+}
+
+func (s *LuaBlockContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *LuaBlockContext) LUA_HEADER() antlr.TerminalNode {
+	return s.GetToken(NginxParserLUA_HEADER, 0)
+}
+
+func (s *LuaBlockContext) AllNEWLINE() []antlr.TerminalNode {
+	return s.GetTokens(NginxParserNEWLINE)
+}
+
+func (s *LuaBlockContext) NEWLINE(i int) antlr.TerminalNode {
+	return s.GetToken(NginxParserNEWLINE, i)
+}
+
+func (s *LuaBlockContext) AllLuaStatement() []ILuaStatementContext {
+	children := s.GetChildren()
+	len := 0
+	for _, ctx := range children {
+		if _, ok := ctx.(ILuaStatementContext); ok {
+			len++
+		}
+	}
+
+	tst := make([]ILuaStatementContext, len)
+	i := 0
+	for _, ctx := range children {
+		if t, ok := ctx.(ILuaStatementContext); ok {
+			tst[i] = t.(ILuaStatementContext)
+			i++
+		}
+	}
+
+	return tst
+}
+
+func (s *LuaBlockContext) LuaStatement(i int) ILuaStatementContext {
+	var t antlr.RuleContext
+	j := 0
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(ILuaStatementContext); ok {
+			if j == i {
+				t = ctx.(antlr.RuleContext)
+				break
+			}
+			j++
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(ILuaStatementContext)
+}
+
+func (s *LuaBlockContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *LuaBlockContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *LuaBlockContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case NginxVisitor:
+		return t.VisitLuaBlock(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
+func (p *NginxParser) LuaBlock() (localctx ILuaBlockContext) {
+	this := p
+	_ = this
+
+	localctx = NewLuaBlockContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 8, NginxParserRULE_luaBlock)
+	var _la int
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(53)
+		p.Match(NginxParserLUA_HEADER)
+	}
+	p.SetState(55)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(54)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+	{
+		p.SetState(57)
+		p.Match(NginxParserT__1)
+	}
+	p.SetState(59)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(58)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+	p.SetState(64)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__0)|(1<<NginxParserT__3)|(1<<NginxParserT__4)|(1<<NginxParserT__5)|(1<<NginxParserValue))) != 0 {
+		{
+			p.SetState(61)
+			p.LuaStatement()
+		}
+
+		p.SetState(66)
+		p.GetErrorHandler().Sync(p)
+		_la = p.GetTokenStream().LA(1)
+	}
+	{
+		p.SetState(67)
+		p.Match(NginxParserT__2)
+	}
+	p.SetState(69)
+	p.GetErrorHandler().Sync(p)
+
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 9, p.GetParserRuleContext()) == 1 {
+		{
+			p.SetState(68)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+
+	return localctx
+}
+
+// ILuaStatementContext is an interface to support dynamic dispatch.
+type ILuaStatementContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// IsLuaStatementContext differentiates from other interfaces.
+	IsLuaStatementContext()
+}
+
+type LuaStatementContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyLuaStatementContext() *LuaStatementContext {
+	var p = new(LuaStatementContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = NginxParserRULE_luaStatement
+	return p
+}
+
+func (*LuaStatementContext) IsLuaStatementContext() {}
+
+func NewLuaStatementContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *LuaStatementContext {
+	var p = new(LuaStatementContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = NginxParserRULE_luaStatement
+
+	return p
+}
+
+func (s *LuaStatementContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *LuaStatementContext) NEWLINE() antlr.TerminalNode {
+	return s.GetToken(NginxParserNEWLINE, 0)
+}
+
+func (s *LuaStatementContext) AllValue() []antlr.TerminalNode {
+	return s.GetTokens(NginxParserValue)
+}
+
+func (s *LuaStatementContext) Value(i int) antlr.TerminalNode {
+	return s.GetToken(NginxParserValue, i)
+}
+
+func (s *LuaStatementContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *LuaStatementContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *LuaStatementContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case NginxVisitor:
+		return t.VisitLuaStatement(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
+func (p *NginxParser) LuaStatement() (localctx ILuaStatementContext) {
+	this := p
+	_ = this
+
+	localctx = NewLuaStatementContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 10, NginxParserRULE_luaStatement)
+	var _la int
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	var _alt int
+
+	p.EnterOuterAlt(localctx, 1)
+	p.SetState(80)
+	p.GetErrorHandler().Sync(p)
+
+	switch p.GetTokenStream().LA(1) {
+	case NginxParserT__3, NginxParserT__4, NginxParserT__5, NginxParserValue:
+		p.SetState(72)
+		p.GetErrorHandler().Sync(p)
+		_alt = 1
+		for ok := true; ok; ok = _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
+			switch _alt {
+			case 1:
+				{
+					p.SetState(71)
+					_la = p.GetTokenStream().LA(1)
+
+					if !(((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__3)|(1<<NginxParserT__4)|(1<<NginxParserT__5)|(1<<NginxParserValue))) != 0) {
+						p.GetErrorHandler().RecoverInline(p)
+					} else {
+						p.GetErrorHandler().ReportMatch(p)
+						p.Consume()
+					}
+				}
+
+			default:
+				panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+			}
+
+			p.SetState(74)
+			p.GetErrorHandler().Sync(p)
+			_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 10, p.GetParserRuleContext())
+		}
+		p.SetState(77)
+		p.GetErrorHandler().Sync(p)
+
+		if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 11, p.GetParserRuleContext()) == 1 {
+			{
+				p.SetState(76)
+				p.Match(NginxParserT__0)
+			}
+
+		}
+
+	case NginxParserT__0:
+		{
+			p.SetState(79)
+			p.Match(NginxParserT__0)
+		}
+
+	default:
+		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+	}
+	p.SetState(83)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(82)
+			p.Match(NginxParserNEWLINE)
+		}
+
 	}
 
 	return localctx
@@ -862,6 +1324,14 @@ func (s *BlockContext) GenericBlockHeader() IGenericBlockHeaderContext {
 	}
 
 	return t.(IGenericBlockHeaderContext)
+}
+
+func (s *BlockContext) AllNEWLINE() []antlr.TerminalNode {
+	return s.GetTokens(NginxParserNEWLINE)
+}
+
+func (s *BlockContext) NEWLINE(i int) antlr.TerminalNode {
+	return s.GetToken(NginxParserNEWLINE, i)
 }
 
 func (s *BlockContext) AllStatement() []IStatementContext {
@@ -987,6 +1457,47 @@ func (s *BlockContext) IfStatement(i int) IIfStatementContext {
 	return t.(IIfStatementContext)
 }
 
+func (s *BlockContext) AllLuaBlock() []ILuaBlockContext {
+	children := s.GetChildren()
+	len := 0
+	for _, ctx := range children {
+		if _, ok := ctx.(ILuaBlockContext); ok {
+			len++
+		}
+	}
+
+	tst := make([]ILuaBlockContext, len)
+	i := 0
+	for _, ctx := range children {
+		if t, ok := ctx.(ILuaBlockContext); ok {
+			tst[i] = t.(ILuaBlockContext)
+			i++
+		}
+	}
+
+	return tst
+}
+
+func (s *BlockContext) LuaBlock(i int) ILuaBlockContext {
+	var t antlr.RuleContext
+	j := 0
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(ILuaBlockContext); ok {
+			if j == i {
+				t = ctx.(antlr.RuleContext)
+				break
+			}
+			j++
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(ILuaBlockContext)
+}
+
 func (s *BlockContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -1010,7 +1521,7 @@ func (p *NginxParser) Block() (localctx IBlockContext) {
 	_ = this
 
 	localctx = NewBlockContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 8, NginxParserRULE_block)
+	p.EnterRule(localctx, 12, NginxParserRULE_block)
 	var _la int
 
 	defer func() {
@@ -1030,64 +1541,113 @@ func (p *NginxParser) Block() (localctx IBlockContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(48)
+	p.SetState(87)
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
 	case NginxParserT__8:
 		{
-			p.SetState(46)
+			p.SetState(85)
 			p.LocationBlockHeader()
 		}
 
 	case NginxParserValue:
 		{
-			p.SetState(47)
+			p.SetState(86)
 			p.GenericBlockHeader()
 		}
 
 	default:
 		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
 	}
-	{
-		p.SetState(50)
-		p.Match(NginxParserT__1)
-	}
-	p.SetState(56)
+	p.SetState(90)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__3)|(1<<NginxParserT__8)|(1<<NginxParserT__9)|(1<<NginxParserValue)|(1<<NginxParserREGEXP_PREFIXED))) != 0 {
-		p.SetState(54)
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(89)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+	{
+		p.SetState(92)
+		p.Match(NginxParserT__1)
+	}
+	p.SetState(94)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(93)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+	p.SetState(107)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__3)|(1<<NginxParserT__8)|(1<<NginxParserT__9)|(1<<NginxParserLUA_HEADER)|(1<<NginxParserValue)|(1<<NginxParserREGEXP_PREFIXED))) != 0 {
+		p.SetState(100)
 		p.GetErrorHandler().Sync(p)
-		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 6, p.GetParserRuleContext()) {
+		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 17, p.GetParserRuleContext()) {
 		case 1:
 			{
-				p.SetState(51)
+				p.SetState(96)
 				p.Statement()
 			}
 
 		case 2:
 			{
-				p.SetState(52)
+				p.SetState(97)
 				p.Block()
 			}
 
 		case 3:
 			{
-				p.SetState(53)
+				p.SetState(98)
 				p.IfStatement()
+			}
+
+		case 4:
+			{
+				p.SetState(99)
+				p.LuaBlock()
+			}
+
+		}
+		p.SetState(103)
+		p.GetErrorHandler().Sync(p)
+		_la = p.GetTokenStream().LA(1)
+
+		if _la == NginxParserNEWLINE {
+			{
+				p.SetState(102)
+				p.Match(NginxParserNEWLINE)
 			}
 
 		}
 
-		p.SetState(58)
+		p.SetState(109)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
-		p.SetState(59)
+		p.SetState(110)
 		p.Match(NginxParserT__2)
+	}
+	p.SetState(112)
+	p.GetErrorHandler().Sync(p)
+
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 20, p.GetParserRuleContext()) == 1 {
+		{
+			p.SetState(111)
+			p.Match(NginxParserNEWLINE)
+		}
+
 	}
 
 	return localctx
@@ -1203,7 +1763,7 @@ func (p *NginxParser) GenericBlockHeader() (localctx IGenericBlockHeaderContext)
 	_ = this
 
 	localctx = NewGenericBlockHeaderContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 10, NginxParserRULE_genericBlockHeader)
+	p.EnterRule(localctx, 14, NginxParserRULE_genericBlockHeader)
 	var _la int
 
 	defer func() {
@@ -1224,32 +1784,32 @@ func (p *NginxParser) GenericBlockHeader() (localctx IGenericBlockHeaderContext)
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(61)
+		p.SetState(114)
 		p.Match(NginxParserValue)
 	}
-	p.SetState(66)
+	p.SetState(119)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__4)|(1<<NginxParserT__6)|(1<<NginxParserT__7)|(1<<NginxParserValue))) != 0 {
-		p.SetState(64)
+	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__5)|(1<<NginxParserT__6)|(1<<NginxParserT__7)|(1<<NginxParserValue))) != 0 {
+		p.SetState(117)
 		p.GetErrorHandler().Sync(p)
-		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 8, p.GetParserRuleContext()) {
+		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 21, p.GetParserRuleContext()) {
 		case 1:
 			{
-				p.SetState(62)
+				p.SetState(115)
 				p.Match(NginxParserValue)
 			}
 
 		case 2:
 			{
-				p.SetState(63)
+				p.SetState(116)
 				p.Regexp()
 			}
 
 		}
 
-		p.SetState(68)
+		p.SetState(121)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -1309,6 +1869,14 @@ func (s *IfStatementContext) IfBody() IIfBodyContext {
 	}
 
 	return t.(IIfBodyContext)
+}
+
+func (s *IfStatementContext) AllNEWLINE() []antlr.TerminalNode {
+	return s.GetTokens(NginxParserNEWLINE)
+}
+
+func (s *IfStatementContext) NEWLINE(i int) antlr.TerminalNode {
+	return s.GetToken(NginxParserNEWLINE, i)
 }
 
 func (s *IfStatementContext) AllStatement() []IStatementContext {
@@ -1375,7 +1943,7 @@ func (p *NginxParser) IfStatement() (localctx IIfStatementContext) {
 	_ = this
 
 	localctx = NewIfStatementContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 12, NginxParserRULE_ifStatement)
+	p.EnterRule(localctx, 16, NginxParserRULE_ifStatement)
 	var _la int
 
 	defer func() {
@@ -1396,34 +1964,88 @@ func (p *NginxParser) IfStatement() (localctx IIfStatementContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(69)
+		p.SetState(122)
 		p.Match(NginxParserT__3)
 	}
+	p.SetState(124)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(123)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
 	{
-		p.SetState(70)
+		p.SetState(126)
 		p.IfBody()
 	}
+	p.SetState(128)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(127)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
 	{
-		p.SetState(71)
+		p.SetState(130)
 		p.Match(NginxParserT__1)
 	}
-	p.SetState(75)
+	p.SetState(132)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(131)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+	p.SetState(140)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	for ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__9)|(1<<NginxParserValue)|(1<<NginxParserREGEXP_PREFIXED))) != 0 {
 		{
-			p.SetState(72)
+			p.SetState(134)
 			p.Statement()
 		}
+		p.SetState(136)
+		p.GetErrorHandler().Sync(p)
+		_la = p.GetTokenStream().LA(1)
 
-		p.SetState(77)
+		if _la == NginxParserNEWLINE {
+			{
+				p.SetState(135)
+				p.Match(NginxParserNEWLINE)
+			}
+
+		}
+
+		p.SetState(142)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
-		p.SetState(78)
+		p.SetState(143)
 		p.Match(NginxParserT__2)
+	}
+	p.SetState(145)
+	p.GetErrorHandler().Sync(p)
+
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 28, p.GetParserRuleContext()) == 1 {
+		{
+			p.SetState(144)
+			p.Match(NginxParserNEWLINE)
+		}
+
 	}
 
 	return localctx
@@ -1466,6 +2088,14 @@ func NewIfBodyContext(parser antlr.Parser, parent antlr.ParserRuleContext, invok
 }
 
 func (s *IfBodyContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *IfBodyContext) AllNEWLINE() []antlr.TerminalNode {
+	return s.GetTokens(NginxParserNEWLINE)
+}
+
+func (s *IfBodyContext) NEWLINE(i int) antlr.TerminalNode {
+	return s.GetToken(NginxParserNEWLINE, i)
+}
 
 func (s *IfBodyContext) AllValue() []antlr.TerminalNode {
 	return s.GetTokens(NginxParserValue)
@@ -1514,7 +2144,8 @@ func (p *NginxParser) IfBody() (localctx IIfBodyContext) {
 	_ = this
 
 	localctx = NewIfBodyContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 14, NginxParserRULE_ifBody)
+	p.EnterRule(localctx, 18, NginxParserRULE_ifBody)
+	var _la int
 
 	defer func() {
 		p.ExitRule()
@@ -1532,44 +2163,83 @@ func (p *NginxParser) IfBody() (localctx IIfBodyContext) {
 		}
 	}()
 
+	var _alt int
+
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(80)
-		p.Match(NginxParserT__4)
+		p.SetState(147)
+		p.Match(NginxParserT__5)
 	}
-	{
-		p.SetState(81)
-		p.Match(NginxParserValue)
-	}
-	p.SetState(83)
+	p.SetState(149)
 	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 11, p.GetParserRuleContext()) == 1 {
+	if _la == NginxParserNEWLINE {
 		{
-			p.SetState(82)
-			p.Match(NginxParserValue)
+			p.SetState(148)
+			p.Match(NginxParserNEWLINE)
 		}
 
 	}
-	p.SetState(87)
+	p.SetState(152)
+	p.GetErrorHandler().Sync(p)
+	_alt = 1
+	for ok := true; ok; ok = _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
+		switch _alt {
+		case 1:
+			{
+				p.SetState(151)
+				p.Match(NginxParserValue)
+			}
+
+		default:
+			panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		}
+
+		p.SetState(154)
+		p.GetErrorHandler().Sync(p)
+		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 30, p.GetParserRuleContext())
+	}
+	p.SetState(157)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 12, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 31, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(85)
+			p.SetState(156)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
+	p.SetState(161)
+	p.GetErrorHandler().Sync(p)
+
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 32, p.GetParserRuleContext()) == 1 {
+		{
+			p.SetState(159)
 			p.Match(NginxParserValue)
 		}
 
-	} else if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 12, p.GetParserRuleContext()) == 2 {
+	} else if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 32, p.GetParserRuleContext()) == 2 {
 		{
-			p.SetState(86)
+			p.SetState(160)
 			p.Regexp()
 		}
 
 	}
+	p.SetState(164)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == NginxParserNEWLINE {
+		{
+			p.SetState(163)
+			p.Match(NginxParserNEWLINE)
+		}
+
+	}
 	{
-		p.SetState(89)
-		p.Match(NginxParserT__5)
+		p.SetState(166)
+		p.Match(NginxParserT__4)
 	}
 
 	return localctx
@@ -1685,7 +2355,7 @@ func (p *NginxParser) Regexp() (localctx IRegexpContext) {
 	_ = this
 
 	localctx = NewRegexpContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 16, NginxParserRULE_regexp)
+	p.EnterRule(localctx, 20, NginxParserRULE_regexp)
 
 	defer func() {
 		p.ExitRule()
@@ -1706,46 +2376,46 @@ func (p *NginxParser) Regexp() (localctx IRegexpContext) {
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(98)
+	p.SetState(175)
 	p.GetErrorHandler().Sync(p)
 	_alt = 1
 	for ok := true; ok; ok = _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		switch _alt {
 		case 1:
-			p.SetState(98)
+			p.SetState(175)
 			p.GetErrorHandler().Sync(p)
 
 			switch p.GetTokenStream().LA(1) {
 			case NginxParserT__6:
 				{
-					p.SetState(91)
+					p.SetState(168)
 					p.Match(NginxParserT__6)
 				}
 
 			case NginxParserT__7:
 				{
-					p.SetState(92)
+					p.SetState(169)
 					p.Match(NginxParserT__7)
 				}
 
 			case NginxParserValue:
 				{
-					p.SetState(93)
+					p.SetState(170)
 					p.Match(NginxParserValue)
 				}
 
-			case NginxParserT__4:
+			case NginxParserT__5:
 				{
-					p.SetState(94)
-					p.Match(NginxParserT__4)
+					p.SetState(171)
+					p.Match(NginxParserT__5)
 				}
 				{
-					p.SetState(95)
+					p.SetState(172)
 					p.Regexp()
 				}
 				{
-					p.SetState(96)
-					p.Match(NginxParserT__5)
+					p.SetState(173)
+					p.Match(NginxParserT__4)
 				}
 
 			default:
@@ -1756,9 +2426,9 @@ func (p *NginxParser) Regexp() (localctx IRegexpContext) {
 			panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
 		}
 
-		p.SetState(100)
+		p.SetState(177)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 14, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 35, p.GetParserRuleContext())
 	}
 
 	return localctx
@@ -1849,7 +2519,7 @@ func (p *NginxParser) LocationBlockHeader() (localctx ILocationBlockHeaderContex
 	_ = this
 
 	localctx = NewLocationBlockHeaderContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 18, NginxParserRULE_locationBlockHeader)
+	p.EnterRule(localctx, 22, NginxParserRULE_locationBlockHeader)
 
 	defer func() {
 		p.ExitRule()
@@ -1869,31 +2539,31 @@ func (p *NginxParser) LocationBlockHeader() (localctx ILocationBlockHeaderContex
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(102)
+		p.SetState(179)
 		p.Match(NginxParserT__8)
 	}
-	p.SetState(104)
+	p.SetState(181)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 15, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 36, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(103)
+			p.SetState(180)
 			p.Match(NginxParserValue)
 		}
 
 	}
-	p.SetState(108)
+	p.SetState(185)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 16, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 37, p.GetParserRuleContext()) {
 	case 1:
 		{
-			p.SetState(106)
+			p.SetState(183)
 			p.Match(NginxParserValue)
 		}
 
 	case 2:
 		{
-			p.SetState(107)
+			p.SetState(184)
 			p.Regexp()
 		}
 
@@ -1987,7 +2657,7 @@ func (p *NginxParser) RewriteStatement() (localctx IRewriteStatementContext) {
 	_ = this
 
 	localctx = NewRewriteStatementContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 20, NginxParserRULE_rewriteStatement)
+	p.EnterRule(localctx, 24, NginxParserRULE_rewriteStatement)
 	var _la int
 
 	defer func() {
@@ -2008,36 +2678,36 @@ func (p *NginxParser) RewriteStatement() (localctx IRewriteStatementContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(110)
+		p.SetState(187)
 		p.Match(NginxParserT__9)
 	}
-	p.SetState(113)
+	p.SetState(190)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 17, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 38, p.GetParserRuleContext()) {
 	case 1:
 		{
-			p.SetState(111)
+			p.SetState(188)
 			p.Match(NginxParserValue)
 		}
 
 	case 2:
 		{
-			p.SetState(112)
+			p.SetState(189)
 			p.Regexp()
 		}
 
 	}
 	{
-		p.SetState(115)
+		p.SetState(192)
 		p.Match(NginxParserValue)
 	}
-	p.SetState(117)
+	p.SetState(194)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if ((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__10)|(1<<NginxParserT__11)|(1<<NginxParserT__12)|(1<<NginxParserT__13))) != 0 {
 		{
-			p.SetState(116)
+			p.SetState(193)
 			_la = p.GetTokenStream().LA(1)
 
 			if !(((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<NginxParserT__10)|(1<<NginxParserT__11)|(1<<NginxParserT__12)|(1<<NginxParserT__13))) != 0) {
